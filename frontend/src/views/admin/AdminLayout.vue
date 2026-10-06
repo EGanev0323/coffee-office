@@ -11,7 +11,7 @@
 </template>
 
 <style scoped>
-.admin { display: grid; gap: 1.5rem; }
+.admin { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 .subnav { display: flex; gap: 1.5rem; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
 .subnav a {
   color: var(--muted);

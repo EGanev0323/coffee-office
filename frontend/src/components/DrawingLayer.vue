@@ -19,6 +19,7 @@ const emit = defineEmits(['clearing'])
 const ERASER = 'ERASER'
 const MIN_STEP = 0.003
 const MAX_POINTS = 2000
+const MAX_Y = 10 // като DrawingService.MAX_Y – по-нататък сървърът отказва линията
 
 const canvas = ref(null)
 const fading = ref(false)
@@ -89,7 +90,7 @@ function toPoint(e) {
   const r = canvas.value.getBoundingClientRect()
   return [
     round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))),
-    round(Math.max(0, (e.clientY - r.top) / r.width))
+    round(Math.min(r.height / r.width, MAX_Y, Math.max(0, (e.clientY - r.top) / r.width)))
   ]
 }
 
@@ -149,11 +150,14 @@ async function loadStrokes() {
 /** Изтриване на всички рисунки – гъбата минава през дъската, а рисунките избледняват. */
 function clearAnimated() {
   if (!strokes.size && !pending.size) return
+  // Трием само линиите отпреди изтриването – нарисуваните през анимацията остават.
+  const ids = [...strokes.keys()]
+  const sent = [...pending]
   emit('clearing')
   fading.value = true
   setTimeout(() => {
-    strokes.clear()
-    pending.clear()
+    ids.forEach((id) => strokes.delete(id))
+    sent.forEach((s) => pending.delete(s))
     redraw()
     fading.value = false
   }, 900)

@@ -61,8 +61,10 @@ docker compose logs -f backend
 Frontend Dockerfile-ът ползва `npm ci`. При добавяне на npm пакет **винаги** обновявай и `package-lock.json`
 (`npm install <пакет>`), иначе билдът на сървъра пада.
 
-Автоматични тестове все още няма. При нова логика в бекенда добавяй тестове (JUnit 5, `@SpringBootTest`/`@DataJpaTest`
-с Testcontainers за PostgreSQL). Във фронтенда – Vitest, ако се добави.
+Тестове: `backend/src/test` (JUnit 5, `@SpringBootTest` + профил `test`). Базата идва от Testcontainers JDBC URL
+(`application-test.yml`, нужен е Docker): `cd backend && mvn -B test`. Без Docker – срещу локален PostgreSQL:
+`mvn -B test -Dspring.datasource.url=jdbc:postgresql://localhost:5432/coffee_test`.
+При нова логика в бекенда добавяй тестове там. Във фронтенда – Vitest, ако се добави.
 
 ## Правила за backend
 
