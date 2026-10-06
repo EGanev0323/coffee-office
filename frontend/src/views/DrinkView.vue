@@ -14,6 +14,7 @@ import photo from '../assets/coffee-face.jpg'
 */
 const UNDO_SECONDS = 15
 const DOUBLE_SCAN_MS = 60 * 1000
+const FRESH_SCAN_MS = 10 * 60 * 1000 // време от сканирането (вкл. вход), в което кафето се отбелязва само
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -49,8 +50,12 @@ function captionFor(count) {
 }
 
 onMounted(async () => {
-  // Връщане назад в историята след вече отбелязано кафе – не отбелязваме пак.
-  if (route.query.done) {
+  const at = Number(route.query.at)
+  const fresh = !route.query.done && at > 0 && Date.now() - at < FRESH_SCAN_MS
+  // Линкът важи веднъж: „Назад“ или стар таб, зареден наново (напр. след затваряне на браузъра),
+  // показват бутон, а не отбелязват кафе сами – каквото и да е станало първия път.
+  router.replace({ query: { done: '1' } })
+  if (!fresh) {
     state.value = 'already'
     return
   }
@@ -150,9 +155,10 @@ async function undo() {
     </section>
 
     <section v-else-if="state === 'already'" class="panel message">
-      <h1>Това кафе вече е отбелязано</h1>
+      <h1>Нищо не е отбелязано</h1>
+      <p class="hint">Този линк от QR кода вече е бил отворен. Ако пиеш кафе сега, натисни бутона.</p>
       <div class="actions">
-        <button class="btn btn-primary btn-big" @click="drink">Изпих още едно</button>
+        <button class="btn btn-primary btn-big" @click="drink">Изпих кафе</button>
         <RouterLink to="/" class="btn btn-big">Към дъската</RouterLink>
       </div>
     </section>

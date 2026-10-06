@@ -36,6 +36,12 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
+  // QR: записваме кога е сканиран кодът, още преди входа. Така стар таб, отворен наново
+  // след часове, не маха кафе сам (виж DrinkView).
+  if (to.name === 'drink' && !to.query.at && !to.query.done) {
+    return { name: 'drink', query: { ...to.query, at: String(Date.now()) }, replace: true }
+  }
+
   if (to.meta.public) {
     return auth.isLoggedIn ? { name: 'home' } : true
   }
