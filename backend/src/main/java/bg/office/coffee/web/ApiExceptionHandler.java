@@ -10,6 +10,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -54,6 +55,13 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiError> conflict(DataIntegrityViolationException e) {
         log.warn("Data integrity violation", e);
         return error(HttpStatus.CONFLICT, "Данните не могат да се запишат, защото са в конфликт със съществуващ запис.");
+    }
+
+    /** Напр. едновременна отмяна на едно и също кафе от два таба – редът вече е изтрит от другата заявка. */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> concurrentChange(ObjectOptimisticLockingFailureException e) {
+        log.warn("Concurrent modification: {}", e.getMessage());
+        return error(HttpStatus.CONFLICT, "Данните току-що бяха променени. Опресни страницата и опитай отново.");
     }
 
     private static ResponseEntity<ApiError> error(HttpStatus status, String message) {

@@ -185,7 +185,7 @@ onMounted(load)
 </template>
 
 <style scoped>
-.overview { display: grid; gap: 1.5rem; }
+.overview { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 .month { display: flex; align-items: center; gap: 0.5rem; }
 .month-name { font-size: var(--step-2); text-transform: capitalize; min-width: 10ch; text-align: center; }
 .month-arrow { font-size: 1.5rem; line-height: 1; padding: 0.3rem 0.8rem; }

@@ -1,0 +1,5 @@
+# Testcontainers JDBC URL: при първата връзка вдига PostgreSQL 16 в Docker.
+# Без Docker може да се подаде локална база: -Dspring.datasource.url=jdbc:postgresql://localhost:5432/coffee_test
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:16-alpine:///coffee

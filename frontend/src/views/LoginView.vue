@@ -14,12 +14,17 @@ const remember = ref(true)
 const error = ref(route.query.expired ? 'Сесията изтече. Влез отново.' : '')
 const busy = ref(false)
 
+/** Само вътрешен път – без „//друг-сайт“ и пълни адреси. */
+function safeNext(next) {
+  return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : null
+}
+
 async function submit() {
   error.value = ''
   busy.value = true
   try {
     await auth.login(username.value.trim(), password.value, remember.value)
-    const next = typeof route.query.next === 'string' ? route.query.next : null
+    const next = safeNext(route.query.next)
     router.replace(next || (auth.isAdmin ? '/admin' : '/'))
   } catch (e) {
     error.value = e.message

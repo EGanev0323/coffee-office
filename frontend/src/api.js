@@ -27,7 +27,10 @@ export async function api(path, { method = 'GET', body } = {}) {
 
   if (res.status === 401 && auth.token && path !== '/auth/login') {
     auth.logout()
-    window.location.assign('/login?expired=1')
+    // След вход колегата се връща там, където е бил (напр. /drink от QR кода).
+    const here = window.location.pathname + window.location.search
+    const next = window.location.pathname.startsWith('/login') ? '' : `&next=${encodeURIComponent(here)}`
+    window.location.assign(`/login?expired=1${next}`)
     throw new ApiError('Сесията изтече. Влез отново.', 401)
   }
   if (res.status === 204) return null

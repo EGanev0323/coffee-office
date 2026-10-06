@@ -136,7 +136,7 @@ onMounted(load)
 </template>
 
 <style scoped>
-.packages { display: grid; gap: 1.5rem; }
+.packages { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 .panel h2 + .hint { margin: 0.25rem 0 1rem; }
 .form-foot { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; }
 .form-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }

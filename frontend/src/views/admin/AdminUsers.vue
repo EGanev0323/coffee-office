@@ -258,7 +258,7 @@ onMounted(load)
 </template>
 
 <style scoped>
-.users { display: grid; gap: 1.5rem; }
+.users { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 .panel h2 + .hint { margin: 0.25rem 0 1rem; }
 .create-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 dialog { width: min(94vw, 520px); }

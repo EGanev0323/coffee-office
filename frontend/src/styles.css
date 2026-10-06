@@ -151,7 +151,7 @@ a { color: var(--marker); }
 .form-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); align-items: end; }
 
 /* ---------- таблици ---------- */
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; position: relative; } /* relative: скритите заглавия да не разтягат страницата */
 table { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
 th {
   text-align: left;

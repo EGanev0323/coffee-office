@@ -26,7 +26,6 @@ const router = createRouter({
         { path: '', name: 'admin', component: AdminOverview },
         { path: 'users', name: 'admin-users', component: AdminUsers },
         { path: 'packages', name: 'admin-packages', component: AdminPackages },
-        { path: 'packages', name: 'admin-packages', component: AdminPackages },
         { path: 'qr', name: 'admin-qr', component: AdminQr }
       ]
     },
@@ -46,9 +45,13 @@ router.beforeEach(async (to) => {
   if (!auth.user) {
     try {
       await auth.fetchMe()
-    } catch {
-      auth.logout()
-      return { name: 'login' }
+    } catch (e) {
+      // Отписваме само при невалиден токен. При рестарт на сървъра или слаба връзка
+      // входът („Запомни ме“) остава, а страницата сама презарежда /me.
+      if (e.status === 401) {
+        auth.logout()
+        return { name: 'login', query: { expired: '1', next: to.fullPath } }
+      }
     }
   }
   if (to.matched.some((r) => r.meta.admin) && !auth.isAdmin) {
