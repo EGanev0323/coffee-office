@@ -80,7 +80,7 @@ public class AdminController {
     @PostMapping("/users/{id}/purchases")
     public MeDto recordPurchase(@PathVariable Long id, @Valid @RequestBody BuyRequest req,
                                 @AuthenticationPrincipal AuthUser me) {
-        return coffeeService.buy(id, req.packageId(), me.id());
+        return coffeeService.buy(id, req.packageId(), req.quantityOrOne(), me.id());
     }
 
     // ----- Пакети -----

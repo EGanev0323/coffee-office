@@ -10,10 +10,12 @@ import bg.office.coffee.repo.ConsumptionRepository;
 import bg.office.coffee.repo.PurchaseRepository;
 import bg.office.coffee.web.dto.ActivityDto;
 import bg.office.coffee.web.dto.BoardEntryDto;
+import bg.office.coffee.web.dto.BuyRequest;
 import bg.office.coffee.web.dto.MeDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -46,11 +48,14 @@ public class CoffeeService {
     }
 
     /**
-     * Записва авансова покупка на пакет и добавя кафетата към баланса.
+     * Записва авансова покупка на пакет (quantity пъти наведнъж) и добавя кафетата към баланса.
      * actorId е този, който въвежда покупката (самият колега или админ).
      */
     @Transactional
-    public MeDto buy(Long userId, Long packageId, Long actorId) {
+    public MeDto buy(Long userId, Long packageId, int quantity, Long actorId) {
+        if (quantity < 1 || quantity > BuyRequest.MAX_QUANTITY) {
+            throw new BusinessException("Невалиден брой пакети.");
+        }
         CoffeePackage pkg = packages.findById(packageId)
                 .filter(CoffeePackage::isActive)
                 .orElseThrow(() -> new NotFoundException("Този пакет вече не се предлага."));
@@ -65,12 +70,13 @@ public class CoffeeService {
         Purchase purchase = new Purchase();
         purchase.setUser(user);
         purchase.setPackageName(pkg.getName());
-        purchase.setCoffeeCount(pkg.getCoffeeCount());
-        purchase.setAmount(pkg.getPrice());
+        purchase.setQuantity(quantity);
+        purchase.setCoffeeCount(pkg.getCoffeeCount() * quantity);
+        purchase.setAmount(pkg.getPrice().multiply(BigDecimal.valueOf(quantity)));
         purchase.setCreatedBy(users.getReferenceById(actorId));
         purchases.save(purchase);
 
-        users.increaseBalance(userId, pkg.getCoffeeCount());
+        users.increaseBalance(userId, pkg.getCoffeeCount() * quantity);
         return MeDto.from(loadUser(userId));
     }
 
@@ -125,9 +131,9 @@ public class CoffeeService {
     public List<ActivityDto> activity(Long userId) {
         Stream<ActivityDto> bought = purchases.findTop30ByUser_IdOrderByCreatedAtDesc(userId).stream()
                 .map(p -> new ActivityDto("PURCHASE", p.getId(), p.getCreatedAt(), p.getCoffeeCount(),
-                        p.getAmount(), p.getPackageName()));
+                        p.getAmount(), p.getPackageName(), p.getQuantity()));
         Stream<ActivityDto> drunk = consumptions.findTop30ByUser_IdOrderByCreatedAtDesc(userId).stream()
-                .map(c -> new ActivityDto("CONSUMPTION", c.getId(), c.getCreatedAt(), 1, null, "Изпито кафе"));
+                .map(c -> new ActivityDto("CONSUMPTION", c.getId(), c.getCreatedAt(), 1, null, "Изпито кафе", 1));
         return Stream.concat(bought, drunk)
                 .sorted(Comparator.comparing(ActivityDto::createdAt).reversed())
                 .limit(30)

@@ -4,6 +4,7 @@ import { api } from '../../api'
 import { notify } from '../../notify'
 import { useAuthStore } from '../../stores/auth'
 import { coffees, money } from '../../format'
+import QuantityStepper from '../../components/QuantityStepper.vue'
 
 const auth = useAuthStore()
 const users = ref([])
@@ -19,6 +20,7 @@ const editing = ref(null)
 const editError = ref('')
 const newPassword = ref('')
 const purchasePackageId = ref(null)
+const purchaseQuantity = ref(1)
 const busy = ref(false)
 
 const activePackages = computed(() => packages.value.filter((p) => p.active))
@@ -56,6 +58,7 @@ function openEditor(u) {
   editError.value = ''
   newPassword.value = ''
   purchasePackageId.value = activePackages.value[0]?.id ?? null
+  purchaseQuantity.value = 1
   dialog.value.showModal()
 }
 function closeEditor() {
@@ -109,13 +112,15 @@ function resetPassword() {
 function recordPurchase() {
   return withBusy(async () => {
     const pkg = packages.value.find((p) => p.id === purchasePackageId.value)
+    const quantity = purchaseQuantity.value
     const res = await api(`/admin/users/${editing.value.id}/purchases`, {
       method: 'POST',
-      body: { packageId: purchasePackageId.value }
+      body: { packageId: purchasePackageId.value, quantity }
     })
     editing.value.balance = res.balance
     if (isSelf.value) auth.user = res
-    notify(`${editing.value.displayName}: добавени ${coffees(pkg.coffeeCount)} за ${money(pkg.price)}.`)
+    purchaseQuantity.value = 1
+    notify(`${editing.value.displayName}: добавени ${coffees(pkg.coffeeCount * quantity)} за ${money(pkg.price * quantity)}.`)
     await load()
   })
 }
@@ -233,6 +238,7 @@ onMounted(load)
                 {{ p.name }} за {{ money(p.price) }}
               </option>
             </select>
+            <QuantityStepper v-model="purchaseQuantity" :disabled="busy" label="Брой пакети" />
             <button class="btn" :disabled="busy || !purchasePackageId">Добави кафетата</button>
           </div>
         </form>
@@ -266,7 +272,7 @@ dialog { width: min(94vw, 520px); }
 .editor-section { display: grid; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
 .editor-section h3 { font-size: var(--step-0); }
 .editor-section .btn-primary { justify-self: start; }
-.inline { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.inline { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 .inline-select, .inline-input {
   flex: 1 1 200px;
   font: inherit;
