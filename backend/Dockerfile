@@ -2,9 +2,21 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml .
-RUN mvn -B -q dependency:go-offline
+# Всички библиотеки и плъгини се теглят тук, преди кода, и се пазят в BuildKit кеш (/root/.m2) между билдовете:
+# при промяна на pom.xml се теглят само новите, а ако връзката към Maven Central прекъсне,
+# следващият опит продължава с вече изтегленото. dependency:go-offline не тегли всичко
+# (напр. micrometer-observation), затова е resolve + resolve-plugins.
+RUN --mount=type=cache,target=/root/.m2 \
+    for i in 1 2 3 4 5; do \
+      mvn -B -q dependency:resolve dependency:resolve-plugins && exit 0; \
+      echo "Тегленето на библиотеките не успя (опит $i от 5)."; \
+      [ "$i" -lt 5 ] && sleep 15; \
+    done; \
+    echo "Няма връзка с Maven Central. Провери мрежата и пусни билда пак - изтегленото досега се пази."; \
+    exit 1
 COPY src ./src
-RUN mvn -B -q package -DskipTests
+# Офлайн (-o): тук вече не се тегли нищо, така че мрежата не може да счупи билда.
+RUN --mount=type=cache,target=/root/.m2 mvn -B -q -o package -DskipTests
 
 # ---- run ----
 FROM eclipse-temurin:21-jre-alpine
