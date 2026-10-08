@@ -44,7 +44,7 @@ public class MeController {
 
     @PostMapping("/me/purchases")
     public MeDto buy(@AuthenticationPrincipal AuthUser me, @Valid @RequestBody BuyRequest req) {
-        return coffeeService.buy(me.id(), req.packageId(), me.id());
+        return coffeeService.buy(me.id(), req.packageId(), req.quantityOrOne(), me.id());
     }
 
     @PostMapping("/me/consumptions")

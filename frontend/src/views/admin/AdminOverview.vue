@@ -72,7 +72,7 @@ async function load() {
 async function removePurchase(p) {
   const ok = await confirmAction({
     title: 'Изтрий покупката',
-    message: `${p.userName}: „${p.packageName}“ за ${money(p.amount)}. ${coffees(p.coffeeCount)} ще бъдат махнати от баланса и сумата няма да се брои в отчета.`,
+    message: `${p.userName}: „${p.packageName}“${p.quantity > 1 ? ` × ${p.quantity}` : ''} за ${money(p.amount)}. ${coffees(p.coffeeCount)} ще бъдат махнати от баланса и сумата няма да се брои в отчета.`,
     confirmText: 'Изтрий покупката',
     danger: true
   })
@@ -168,7 +168,7 @@ onMounted(load)
                 {{ p.userName }}
                 <span v-if="p.createdBy && p.createdBy !== p.userName" class="hint">(въведено от {{ p.createdBy }})</span>
               </td>
-              <td>{{ p.packageName }}</td>
+              <td>{{ p.packageName }}<template v-if="p.quantity > 1"> × {{ p.quantity }}</template></td>
               <td class="num">{{ money(p.amount) }}</td>
               <td class="num">
                 <button class="btn btn-danger btn-small" @click="removePurchase(p)">Изтрий</button>

@@ -5,7 +5,8 @@ import java.time.Instant;
 
 /**
  * Ред от историята на колегата.
- * type: PURCHASE (добавени кафета) или CONSUMPTION (изпито кафе).
+ * type: PURCHASE (добавени кафета) или CONSUMPTION (изпито кафе). quantity – колко пъти е купен пакетът.
  */
-public record ActivityDto(String type, Long id, Instant createdAt, int coffees, BigDecimal amount, String label) {
+public record ActivityDto(String type, Long id, Instant createdAt, int coffees, BigDecimal amount, String label,
+                          int quantity) {
 }

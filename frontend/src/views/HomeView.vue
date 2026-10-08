@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { api } from '../api'
 import { useAuthStore } from '../stores/auth'
 import { notify } from '../notify'
@@ -8,6 +8,7 @@ import { coffees, dateTime, money } from '../format'
 import TallyMarks from '../components/TallyMarks.vue'
 import WhiteBoard from '../components/WhiteBoard.vue'
 import DrinkOverlay from '../components/DrinkOverlay.vue'
+import QuantityStepper from '../components/QuantityStepper.vue'
 
 const UNDO_MS = 10 * 60 * 1000
 const REFRESH_MS = 20 * 1000
@@ -15,6 +16,8 @@ const OVERLAY_MS = 3000
 
 const auth = useAuthStore()
 const packages = ref([])
+const quantities = reactive({}) // packageId -> колко пъти да се купи пакетът
+const qty = (pkg) => quantities[pkg.id] ?? 1
 const activity = ref([])
 const board = ref([])
 const loading = ref(true)
@@ -133,16 +136,20 @@ function undo() {
 }
 
 async function buy(pkg) {
+  const quantity = qty(pkg)
+  const total = pkg.coffeeCount * quantity
+  const price = pkg.price * quantity
   const ok = await confirmAction({
-    title: `Купи ${pkg.name}`,
-    message: `Ще получиш ${coffees(pkg.coffeeCount)} за ${money(pkg.price)}. Остави парите в касичката за кафе.`,
-    confirmText: `Купи за ${money(pkg.price)}`
+    title: quantity > 1 ? `Купи ${quantity} × ${pkg.name}` : `Купи ${pkg.name}`,
+    message: `Ще получиш ${coffees(total)} за ${money(price)}. Остави парите в касичката за кафе.`,
+    confirmText: `Купи за ${money(price)}`
   })
   if (!ok) return
-  await run(
-    () => api('/me/purchases', { method: 'POST', body: { packageId: pkg.id } }),
-    `Добавени ${coffees(pkg.coffeeCount)} към дъската ти.`
+  const done = await run(
+    () => api('/me/purchases', { method: 'POST', body: { packageId: pkg.id, quantity } }),
+    `Добавени ${coffees(total)} към дъската ти.`
   )
+  if (done) quantities[pkg.id] = 1
 }
 </script>
 
@@ -182,11 +189,21 @@ async function buy(pkg) {
       <p v-else class="hint">Плащаш предварително и кафетата се добавят към твоята дъска.</p>
       <ul v-if="packages.length && !unlimited" class="package-list">
         <li v-for="p in packages" :key="p.id">
-          <div>
+          <div class="package-info">
             <p class="package-name">{{ p.name }}</p>
-            <p class="hint">{{ money(p.price / p.coffeeCount) }} за кафе</p>
+            <p class="hint">
+              <template v-if="qty(p) > 1">{{ coffees(p.coffeeCount * qty(p)) }} · </template>{{ money(p.price / p.coffeeCount) }} за кафе
+            </p>
           </div>
-          <button class="btn" :disabled="busy" @click="buy(p)">{{ money(p.price) }}</button>
+          <div class="package-buy">
+            <QuantityStepper
+              :model-value="qty(p)"
+              :disabled="busy"
+              :label="`Брой ${p.name}`"
+              @update:model-value="(v) => (quantities[p.id] = v)"
+            />
+            <button class="btn package-price" :disabled="busy" @click="buy(p)">{{ money(p.price * qty(p)) }}</button>
+          </div>
         </li>
       </ul>
       <p v-else-if="!loading && !unlimited" class="hint empty">Все още няма пакети. Администраторът трябва да добави поне един.</p>
@@ -205,7 +222,7 @@ async function buy(pkg) {
         <li v-for="a in activity" :key="a.type + a.id" :class="a.type === 'PURCHASE' ? 'is-purchase' : ''">
           <span class="activity-when">{{ dateTime(a.createdAt) }}</span>
           <span class="activity-what">
-            {{ a.type === 'PURCHASE' ? `Купен пакет „${a.label}“ за ${money(a.amount)}` : a.label }}
+            {{ a.type === 'PURCHASE' ? `Купен пакет „${a.label}“${a.quantity > 1 ? ` × ${a.quantity}` : ''} за ${money(a.amount)}` : a.label }}
           </span>
           <span class="activity-delta">{{ a.type === 'PURCHASE' ? `+${a.coffees}` : '−1' }}</span>
         </li>
@@ -247,6 +264,11 @@ async function buy(pkg) {
   border-top: 1px solid var(--rule);
 }
 .package-name { font-weight: 600; }
+/* текстът се пренася в своята колона, а бутоните остават на реда (на много тесен екран слизат отдолу) */
+.package-list li { flex-wrap: wrap; row-gap: 0.6rem; }
+.package-info { flex: 1 1 6rem; min-width: 0; }
+.package-buy { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+.package-price { min-width: 5.5rem; font-variant-numeric: tabular-nums; }
 .empty { margin-top: 1rem; }
 
 .board-area { grid-column: 1 / -1; margin-top: 0.75rem; }

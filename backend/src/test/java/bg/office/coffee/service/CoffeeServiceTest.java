@@ -63,7 +63,7 @@ class CoffeeServiceTest {
     void buyCopiesPackageAndAddsCoffees() {
         AppUser u = newUser(false);
 
-        MeDto me = coffeeService.buy(u.getId(), pkg.getId(), u.getId());
+        MeDto me = coffeeService.buy(u.getId(), pkg.getId(), 1, u.getId());
 
         assertThat(me.balance()).isEqualTo(5);
         Purchase p = purchases.findTop30ByUser_IdOrderByCreatedAtDesc(u.getId()).get(0);
@@ -78,12 +78,41 @@ class CoffeeServiceTest {
     }
 
     @Test
+    void buyWithQuantityAddsAllCoffeesInOnePurchase() {
+        AppUser u = newUser(false);
+
+        MeDto me = coffeeService.buy(u.getId(), pkg.getId(), 3, u.getId());
+
+        assertThat(me.balance()).isEqualTo(15);
+        var bought = purchases.findTop30ByUser_IdOrderByCreatedAtDesc(u.getId());
+        assertThat(bought).hasSize(1);
+        assertThat(bought.get(0).getQuantity()).isEqualTo(3);
+        assertThat(bought.get(0).getCoffeeCount()).isEqualTo(15);
+        assertThat(bought.get(0).getAmount()).isEqualByComparingTo("6.00");
+
+        // Изтриването на покупката маха всичките ѝ кафета.
+        coffeeService.deletePurchase(bought.get(0).getId());
+        assertThat(balance(u)).isZero();
+    }
+
+    @Test
+    void invalidQuantityIsRejected() {
+        AppUser u = newUser(false);
+
+        assertThatThrownBy(() -> coffeeService.buy(u.getId(), pkg.getId(), 0, u.getId()))
+                .isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> coffeeService.buy(u.getId(), pkg.getId(), 101, u.getId()))
+                .isInstanceOf(BusinessException.class);
+        assertThat(balance(u)).isZero();
+    }
+
+    @Test
     void hiddenPackageCannotBeBought() {
         AppUser u = newUser(false);
         pkg.setActive(false);
         packages.save(pkg);
 
-        assertThatThrownBy(() -> coffeeService.buy(u.getId(), pkg.getId(), u.getId()))
+        assertThatThrownBy(() -> coffeeService.buy(u.getId(), pkg.getId(), 1, u.getId()))
                 .isInstanceOf(NotFoundException.class);
         assertThat(balance(u)).isZero();
     }
@@ -92,7 +121,7 @@ class CoffeeServiceTest {
     void unlimitedUserCannotBuy() {
         AppUser u = newUser(true);
 
-        assertThatThrownBy(() -> coffeeService.buy(u.getId(), pkg.getId(), u.getId()))
+        assertThatThrownBy(() -> coffeeService.buy(u.getId(), pkg.getId(), 1, u.getId()))
                 .isInstanceOf(BusinessException.class);
         assertThat(purchases.findTop30ByUser_IdOrderByCreatedAtDesc(u.getId())).isEmpty();
     }
@@ -100,7 +129,7 @@ class CoffeeServiceTest {
     @Test
     void drinkDecreasesBalanceAndFailsAtZero() {
         AppUser u = newUser(false);
-        coffeeService.buy(u.getId(), pkg.getId(), u.getId());
+        coffeeService.buy(u.getId(), pkg.getId(), 1, u.getId());
 
         for (int i = 4; i >= 0; i--) {
             assertThat(coffeeService.drink(u.getId()).balance()).isEqualTo(i);
@@ -126,7 +155,7 @@ class CoffeeServiceTest {
     @Test
     void undoReturnsTheCoffee() {
         AppUser u = newUser(false);
-        coffeeService.buy(u.getId(), pkg.getId(), u.getId());
+        coffeeService.buy(u.getId(), pkg.getId(), 1, u.getId());
         coffeeService.drink(u.getId());
 
         MeDto me = coffeeService.undoLastDrink(u.getId());
@@ -140,7 +169,7 @@ class CoffeeServiceTest {
     @Test
     void deletePurchaseRemovesCoffees() {
         AppUser u = newUser(false);
-        coffeeService.buy(u.getId(), pkg.getId(), u.getId());
+        coffeeService.buy(u.getId(), pkg.getId(), 1, u.getId());
         Long purchaseId = purchases.findTop30ByUser_IdOrderByCreatedAtDesc(u.getId()).get(0).getId();
 
         coffeeService.deletePurchase(purchaseId);
@@ -152,7 +181,7 @@ class CoffeeServiceTest {
     @Test
     void deletePurchaseIsRefusedWhenCoffeesWereDrunk() {
         AppUser u = newUser(false);
-        coffeeService.buy(u.getId(), pkg.getId(), u.getId());
+        coffeeService.buy(u.getId(), pkg.getId(), 1, u.getId());
         coffeeService.drink(u.getId());
         Long purchaseId = purchases.findTop30ByUser_IdOrderByCreatedAtDesc(u.getId()).get(0).getId();
 

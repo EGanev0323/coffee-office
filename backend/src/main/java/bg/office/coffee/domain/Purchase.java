@@ -27,6 +27,10 @@ public class Purchase {
     @Column(name = "coffee_count", nullable = false)
     private int coffeeCount;
 
+    /** Колко пъти е купен пакетът наведнъж. coffeeCount и amount са общо за всички. */
+    @Column(nullable = false)
+    private int quantity = 1;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
@@ -45,6 +49,8 @@ public class Purchase {
     public void setPackageName(String packageName) { this.packageName = packageName; }
     public int getCoffeeCount() { return coffeeCount; }
     public void setCoffeeCount(int coffeeCount) { this.coffeeCount = coffeeCount; }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public Instant getCreatedAt() { return createdAt; }

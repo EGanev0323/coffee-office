@@ -25,7 +25,7 @@ backend/src/main/java/bg/office/coffee/
   web/         контролери (Auth, Me, Admin, Board), dto/ (records), ApiExceptionHandler
 backend/src/main/resources/
   application.yml
-  db/migration/   V1__init … V5__board_visible  (следващата е V6)
+  db/migration/   V1__init … V6__purchase_quantity  (следващата е V7)
 frontend/src/
   api.js            единствената обвивка около fetch (токен, 401, четими грешки)
   boardEvents.js    SSE клиент през fetch + reconnect
@@ -33,7 +33,7 @@ frontend/src/
   router.js         guard: вход, зареждане на /me, админ маршрути
   notify.js, confirm.js   toast и диалог за потвърждение
   format.js         пари (EUR, bg-BG), дати, „1 кафе / N кафета“
-  components/       WhiteBoard, TallyMarks, DrawingLayer, DrinkOverlay, ConfirmDialog, ToastStack
+  components/       WhiteBoard, TallyMarks, DrawingLayer, DrinkOverlay, ConfirmDialog, ToastStack, QuantityStepper
   views/            Login, Home, Account, Drink (QR), admin/{Overview, Users, Packages, Qr, Layout}
   assets/coffee-face.jpg   лична снимка за „Ти изпи кафе“ – хранилището е private
 frontend/nginx.conf   отделен location за /api/board/events (SSE, без буфериране)
@@ -74,10 +74,12 @@ Frontend Dockerfile-ът ползва `npm ci`. При добавяне на npm
   `ApiExceptionHandler` връща `{ "message": "..." }`. Съобщенията са на български и са подходящи за показване на потребителя.
 - Съобщенията във валидационните анотации (`@NotBlank(message = ...)`) също са на български.
 - `spring.jpa.hibernate.ddl-auto: none`. **Всяка промяна в схемата е нова Flyway миграция.**
-  Никога не редактирай вече приложена миграция. Следващата е `V6__...sql`.
+  Никога не редактирай вече приложена миграция. Следващата е `V7__...sql`.
 - Балансът се променя **само** през атомарните заявки `AppUserRepository.increaseBalance/decreaseBalance`
   (`update ... where balance >= :amount`). В базата има `check (balance >= 0)`.
-- Покупката копира името, броя и цената на пакета – промяна на пакет не променя историята.
+- Покупката копира името, броя и цената на пакета – промяна на пакет не променя историята. Пакет може да се купи
+  няколко пъти наведнъж (`quantity`, бутони − / +, до `BuyRequest.MAX_QUANTITY`): записва се една покупка,
+  а `coffee_count` и `amount` в нея са общо за всички бройки.
 - Пакетите не се трият, а се скриват (`active = false`).
 - Месечните граници се смятат в `APP_TIMEZONE` (Europe/Sofia).
 - Броенето на нещо, което може да е празно (`sum(...)`), връща `null` от репозиторито и се обработва в сървиса –
