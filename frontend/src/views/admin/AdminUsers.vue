@@ -5,6 +5,7 @@ import { notify } from '../../notify'
 import { useAuthStore } from '../../stores/auth'
 import { coffees, money } from '../../format'
 import QuantityStepper from '../../components/QuantityStepper.vue'
+import { gsap, lockScroll, reducedMotion } from '../../motion'
 
 const auth = useAuthStore()
 const users = ref([])
@@ -60,6 +61,14 @@ function openEditor(u) {
   purchasePackageId.value = activePackages.value[0]?.id ?? null
   purchaseQuantity.value = 1
   dialog.value.showModal()
+  lockScroll(true)
+  if (!reducedMotion()) {
+    gsap.fromTo(dialog.value, { y: 30, scale: 0.94, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.5, ease: 'back.out(1.6)', clearProps: 'transform,opacity,visibility' })
+  }
+}
+function onDialogClose() {
+  editing.value = null
+  lockScroll(false)
 }
 function closeEditor() {
   dialog.value.close()
@@ -130,7 +139,7 @@ onMounted(load)
 
 <template>
   <div class="users">
-    <form class="panel" @submit.prevent="create">
+    <form v-spotlight v-reveal class="panel" @submit.prevent="create">
       <h2>Нов колега</h2>
       <p class="hint">Колегата влиза с потребителското име и паролата, после може да си смени паролата от „Профил“.</p>
       <div class="form-grid create-grid">
@@ -159,7 +168,7 @@ onMounted(load)
       <p v-if="createError" class="form-error" role="alert">{{ createError }}</p>
     </form>
 
-    <section class="panel">
+    <section v-spotlight v-reveal="{ delay: 0.1 }" class="panel">
       <h2>Колеги</h2>
       <div class="table-wrap">
         <table>
@@ -172,8 +181,8 @@ onMounted(load)
               <th><span class="visually-hidden">Действия</span></th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="u in users" :key="u.id" :class="{ 'is-muted': !u.active }">
+          <TransitionGroup tag="tbody" name="row-fade">
+            <tr v-for="(u, i) in users" :key="u.id" :class="{ 'is-muted': !u.active }" :style="{ '--i': Math.min(i, 15) }">
               <td>
                 {{ u.displayName }}
                 <span v-if="!u.active" class="badge badge-off">неактивен</span>
@@ -184,15 +193,15 @@ onMounted(load)
               <td class="num">{{ u.unlimited ? '∞+1' : u.balance }}</td>
               <td class="num"><button class="btn btn-small" @click="openEditor(u)">Управлявай</button></td>
             </tr>
-            <tr v-if="!loading && !users.length">
+            <tr v-if="!loading && !users.length" key="empty">
               <td colspan="5" class="hint">Все още няма колеги.</td>
             </tr>
-          </tbody>
+          </TransitionGroup>
         </table>
       </div>
     </section>
 
-    <dialog ref="dialog" @close="editing = null">
+    <dialog ref="dialog" @close="onDialogClose">
       <div v-if="editing" class="dialog-body">
         <div class="dialog-head">
           <h2>{{ editing.displayName }}</h2>
@@ -264,6 +273,10 @@ onMounted(load)
 </template>
 
 <style scoped>
+.row-fade-enter-active { transition: opacity 0.35s ease, transform 0.35s ease; transition-delay: calc(var(--i, 0) * 30ms); }
+.row-fade-leave-active { transition: opacity 0.25s ease; }
+.row-fade-enter-from { opacity: 0; transform: translateY(8px); }
+.row-fade-leave-to { opacity: 0; }
 .users { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 .panel h2 + .hint { margin: 0.25rem 0 1rem; }
 .create-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }

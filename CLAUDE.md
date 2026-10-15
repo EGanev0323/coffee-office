@@ -11,6 +11,7 @@
 
 - **Backend:** Java 21, Spring Boot 3.3, Spring Security (stateless JWT, jjwt 0.12), Spring Data JPA / Hibernate, Flyway, PostgreSQL 16
 - **Frontend:** Vue 3 (`<script setup>`), Vite 5, Pinia, Vue Router, без UI библиотеки. Шрифтове през `@fontsource` (Onest, Caveat). `qrcode` за QR етикета.
+  Анимации: **GSAP** (+ ScrollTrigger, SplitText) и **Lenis** (плавно скролване); ефектите в `components/fx/` са Vue версии на компоненти от React Bits.
 - **Инфраструктура:** Docker Compose (`db`, `backend`, `frontend`). nginx във `frontend` контейнера сервира Vue и проксира `/api` към `backend:8080`. Публичен достъп през Tailscale Funnel (HTTPS).
 
 ## Структура
@@ -34,6 +35,9 @@ frontend/src/
   notify.js, confirm.js   toast и диалог за потвърждение
   format.js         пари (EUR, bg-BG), дати, „1 кафе / N кафета“
   components/       WhiteBoard, TallyMarks, DrawingLayer, DrinkOverlay, ConfirmDialog, ToastStack, QuantityStepper
+  components/fx/    SplitText, CountUp, ShinyText, ClickSpark (по React Bits), SteamCup, FloatingBeans
+  motion/           index.js (GSAP + Lenis, reducedMotion, shake, pop, afterTick), directives.js (v-reveal, v-magnet,
+                    v-tilt, v-spotlight), burst.js (летящи зърна/чертички), pageTransition.js, useSlidingIndicator.js
   views/            Login, Home, Account, Drink (QR), admin/{Overview, Users, Packages, Qr, Layout}
   assets/coffee-face.jpg   лична снимка за „Ти изпи кафе“ – хранилището е private
 frontend/nginx.conf   отделен location за /api/board/events (SSE, без буфериране)
@@ -94,7 +98,13 @@ Frontend Dockerfile-ът ползва `npm ci`. При добавяне на npm
   (баланс, имена и чертички на дъската, надписи под снимката). Не разпространявай Caveat в обикновения UI.
 - Цветовете на маркерите са фиксирани: `#1E4BAF` (син), `#B8372A` (червен), `#2B1F18` (черен). Бекендът ги валидира
   (`DrawingService.COLORS`, плюс `ERASER`).
-- Всяка анимация трябва да уважава `prefers-reduced-motion` (глобалното правило в `styles.css` + проверки в JS).
+- Всяка анимация трябва да уважава `prefers-reduced-motion` (глобалното правило в `styles.css` + `reducedMotion()` от `motion/`).
+  Тогава Lenis не се пуска, а GSAP анимациите показват крайното състояние веднага.
+- Анимациите са през GSAP от `motion/` (не внасяй `gsap` директно с нови плъгини, без да ги регистрираш там).
+  В leave hooks на `<Transition :css="false">` при reduced motion викай `afterTick(done)`, не `done()` синхронно.
+- Магнит, наклон и прожектор (`v-magnet`, `v-tilt`, `v-spotlight`) работят само с мишка – на телефон нищо не правят.
+- Елементи със собствено скролване, в които колелцето трябва да е нативно, получават `data-lenis-prevent`.
+  Модалните диалози викат `lockScroll(true/false)`.
 - Проверявай изгледа и на мобилен екран (~390 px). Колегите ползват основно телефони.
 
 ## Важни решения (не ги променяй без причина)

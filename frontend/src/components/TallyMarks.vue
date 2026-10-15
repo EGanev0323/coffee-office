@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 /*
   Балансът, нарисуван като чертички на дъска – групи по пет, петата е наклонена.
@@ -11,6 +11,14 @@ const props = defineProps({
   size: { type: String, default: 'lg' }, // 'lg' | 'sm'
   unlimited: { type: Boolean, default: false }
 })
+
+// От коя чертичка започва „дописването“ – само новите се рисуват една след друга.
+const baseline = ref(0)
+watch(() => props.count, (next, prev) => {
+  if (next > prev) baseline.value = Math.min(prev, props.max)
+})
+const STEP_MS = 45
+const delay = (index) => `${Math.min(Math.max(0, index - baseline.value) * STEP_MS, 1400)}ms`
 
 const shown = computed(() => Math.max(0, Math.min(props.count, props.max)))
 const hidden = computed(() => Math.max(0, props.count - shown.value))
@@ -64,9 +72,17 @@ function slash(g) {
             :key="s"
             v-bind="stroke(g, s - 1)"
             :data-stroke="g * 5 + s - 1"
+            :style="{ animationDelay: delay(g * 5 + s - 1) }"
             class="tally-stroke"
           />
-          <line v-if="n === 5" key="slash" v-bind="slash(g)" :data-stroke="g * 5 + 4" class="tally-stroke" />
+          <line
+            v-if="n === 5"
+            key="slash"
+            v-bind="slash(g)"
+            :data-stroke="g * 5 + 4"
+            :style="{ animationDelay: delay(g * 5 + 4) }"
+            class="tally-stroke tally-slash"
+          />
         </TransitionGroup>
       </svg>
     </TransitionGroup>
@@ -91,8 +107,10 @@ function slash(g) {
   stroke-width: 3.2;
   stroke-linecap: round;
   stroke-dasharray: 44;
-  animation: draw 0.4s ease-out both;
+  animation: draw 0.38s cubic-bezier(0.6, 0, 0.3, 1) both;
 }
+/* наклонената черта е по-дълга и се „замахва“ по-бързо */
+.tally-slash { animation-duration: 0.3s; }
 .tally-infinity { width: 88px; height: 44px; overflow: visible; }
 .tally-sm .tally-infinity { width: 60px; height: 30px; }
 .tally-infinity-path {
@@ -113,6 +131,7 @@ function slash(g) {
 .tally-stroke.tally-erase-leave-active,
 .tally-group-leave-active .tally-stroke {
   animation: erase 0.55s ease-in forwards;
+  animation-delay: 0s !important;
 }
 /* цялата група изчезва, когато в нея не остане чертичка */
 .tally-group.tally-group-leave-active {

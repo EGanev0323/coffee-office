@@ -3,16 +3,22 @@ import { reactive, ref } from 'vue'
 import { api } from '../api'
 import { useAuthStore } from '../stores/auth'
 import { notify } from '../notify'
+import SplitText from '../components/fx/SplitText.vue'
+import { shake } from '../motion'
+import { burst } from '../motion/burst'
 
 const auth = useAuthStore()
 const form = reactive({ currentPassword: '', newPassword: '', repeat: '' })
 const error = ref('')
 const busy = ref(false)
+const formEl = ref(null)
+const submitBtn = ref(null)
 
 async function submit() {
   error.value = ''
   if (form.newPassword !== form.repeat) {
     error.value = 'Новата парола и повторението не съвпадат.'
+    shake(formEl.value)
     return
   }
   busy.value = true
@@ -25,8 +31,10 @@ async function submit() {
     auth.user = res.user
     Object.assign(form, { currentPassword: '', newPassword: '', repeat: '' })
     notify('Паролата е сменена. Всички други устройства са отписани.')
+    burst(submitBtn.value, { kind: 'strokes', count: 12 })
   } catch (e) {
     error.value = e.message
+    shake(formEl.value)
   } finally {
     busy.value = false
   }
@@ -35,10 +43,10 @@ async function submit() {
 
 <template>
   <div class="account">
-    <h1>Профил</h1>
-    <p class="hint">{{ auth.user?.displayName }}, потребителско име {{ auth.user?.username }}</p>
+    <SplitText tag="h1" text="Профил" :stagger="0.05" />
+    <p v-reveal="{ delay: 0.15, y: 10 }" class="hint">{{ auth.user?.displayName }}, потребителско име {{ auth.user?.username }}</p>
 
-    <form class="panel stack" @submit.prevent="submit">
+    <form ref="formEl" v-spotlight v-reveal="{ delay: 0.2 }" class="panel stack" @submit.prevent="submit">
       <h2>Смяна на парола</h2>
       <p class="hint">Всички други устройства, на които си влязъл, ще бъдат отписани.</p>
       <div class="field">
@@ -54,7 +62,7 @@ async function submit() {
         <input id="rep" v-model="form.repeat" type="password" autocomplete="new-password" minlength="6" required />
       </div>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
-      <button class="btn btn-primary" :disabled="busy">Смени паролата</button>
+      <button ref="submitBtn" v-magnet="{ strength: 0.15, padding: 16 }" class="btn btn-primary" :disabled="busy">Смени паролата</button>
     </form>
   </div>
 </template>

@@ -4,6 +4,8 @@ import { api } from '../../api'
 import { notify } from '../../notify'
 import { confirmAction } from '../../confirm'
 import { coffees, dateTime, money, monthLabel } from '../../format'
+import CountUp from '../../components/fx/CountUp.vue'
+import SplitText from '../../components/fx/SplitText.vue'
 
 const today = new Date()
 const year = ref(today.getFullYear())
@@ -93,26 +95,26 @@ onMounted(load)
   <div class="overview">
     <header class="month">
       <button class="btn btn-quiet month-arrow" aria-label="Предишен месец" @click="shift(-1)">‹</button>
-      <h1 class="month-name">{{ label }}</h1>
+      <SplitText tag="h1" class="month-name" :text="label" :stagger="0.025" :from="{ yPercent: 70, autoAlpha: 0 }" />
       <button class="btn btn-quiet month-arrow" aria-label="Следващ месец" :disabled="isCurrentMonth" @click="shift(1)">›</button>
     </header>
 
-    <section v-if="stats" class="summary" :aria-busy="loading">
+    <section v-if="stats" v-reveal="{ children: '.collected, .facts > div', stagger: 0.08 }" class="summary" :aria-busy="loading">
       <p class="collected">
-        <span class="collected-sum hand">{{ money(stats.totalCollected) }}</span>
+        <CountUp class="collected-sum hand" :value="Number(stats.totalCollected)" :format="money" :duration="1.6" />
         <span class="collected-text">
           събрани през месеца от {{ stats.purchasesCount }}
           {{ stats.purchasesCount === 1 ? 'покупка' : 'покупки' }}
         </span>
       </p>
       <dl class="facts">
-        <div><dt>Продадени кафета</dt><dd>{{ stats.coffeesSold }}</dd></div>
-        <div><dt>Изпити кафета</dt><dd>{{ stats.coffeesConsumed }}</dd></div>
-        <div><dt>Предплатени, още неизпити (всички колеги без безкрайните)</dt><dd>{{ stats.outstandingCoffees }}</dd></div>
+        <div><dt>Продадени кафета</dt><dd><CountUp :value="stats.coffeesSold" :delay="0.15" /></dd></div>
+        <div><dt>Изпити кафета</dt><dd><CountUp :value="stats.coffeesConsumed" :delay="0.25" /></dd></div>
+        <div><dt>Предплатени, още неизпити (всички колеги без безкрайните)</dt><dd><CountUp :value="stats.outstandingCoffees" :delay="0.35" /></dd></div>
       </dl>
     </section>
 
-    <section v-if="stats" class="panel">
+    <section v-if="stats" v-spotlight v-reveal="{ delay: 0.1 }" class="panel">
       <h2>Кой колко кафета има</h2>
       <p class="hint">„Налични“ е текущият баланс. Останалите колони са само за {{ label }}.</p>
       <div class="table-wrap">
@@ -126,7 +128,7 @@ onMounted(load)
               <th class="num" :aria-sort="ariaSort('spent')"><button class="sort-btn" @click="sortBy('spent')">Платени</button></th>
             </tr>
           </thead>
-          <tbody>
+          <TransitionGroup v-reveal="{ children: 'tr', stagger: 0.04, y: 12 }" tag="tbody" name="row-sort">
             <tr v-for="u in rows" :key="u.id" :class="{ 'is-muted': !u.active }">
               <td>
                 {{ u.displayName }}
@@ -139,15 +141,15 @@ onMounted(load)
               <td class="num">{{ u.consumed }}</td>
               <td class="num">{{ money(u.spent) }}</td>
             </tr>
-            <tr v-if="!rows.length">
+            <tr v-if="!rows.length" key="empty">
               <td colspan="5" class="hint">Няма колеги. Добави ги от раздел „Колеги“.</td>
             </tr>
-          </tbody>
+          </TransitionGroup>
         </table>
       </div>
     </section>
 
-    <section class="panel">
+    <section v-spotlight v-reveal="{ delay: 0.15 }" class="panel">
       <h2>Покупки през месеца</h2>
       <p class="hint">Изтрий покупка, ако е въведена по грешка или парите не са платени.</p>
       <div class="table-wrap">
@@ -161,7 +163,7 @@ onMounted(load)
               <th><span class="visually-hidden">Действия</span></th>
             </tr>
           </thead>
-          <tbody>
+          <TransitionGroup tag="tbody" name="row-fade">
             <tr v-for="p in purchases" :key="p.id">
               <td>{{ dateTime(p.createdAt) }}</td>
               <td>
@@ -174,10 +176,10 @@ onMounted(load)
                 <button class="btn btn-danger btn-small" @click="removePurchase(p)">Изтрий</button>
               </td>
             </tr>
-            <tr v-if="!purchases.length">
+            <tr v-if="!purchases.length" key="empty">
               <td colspan="5" class="hint">През този месец няма покупки.</td>
             </tr>
-          </tbody>
+          </TransitionGroup>
         </table>
       </div>
     </section>
@@ -202,6 +204,15 @@ onMounted(load)
 
 .panel h2 + .hint { margin: 0.25rem 0 0.75rem; }
 .balance-cell { font-size: 1.6rem; }
+.month-arrow { transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1), background-color 0.2s ease; }
+.month-arrow:hover:not(:disabled) { transform: scale(1.15); }
+
+/* сортиране: редовете се разместват плавно */
+.row-sort-move { transition: transform 0.45s cubic-bezier(0.3, 1.1, 0.4, 1); }
+.row-fade-enter-active, .row-sort-enter-active { transition: opacity 0.35s ease, transform 0.35s ease; }
+.row-fade-leave-active, .row-sort-leave-active { transition: opacity 0.25s ease; }
+.row-fade-enter-from, .row-sort-enter-from { opacity: 0; transform: translateY(8px); }
+.row-fade-leave-to, .row-sort-leave-to { opacity: 0; }
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
 }

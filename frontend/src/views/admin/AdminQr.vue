@@ -29,7 +29,7 @@ onMounted(render)
 
 <template>
   <div class="qr-admin">
-    <section class="panel">
+    <section v-spotlight v-reveal class="panel">
       <h2>QR код за кафемашината</h2>
       <p class="hint">
         Принтирай етикета и го залепи на машината. Колегите го сканират с камерата на телефона
@@ -46,7 +46,7 @@ onMounted(render)
       <button class="btn btn-primary" @click="printLabel">Принтирай етикета</button>
     </section>
 
-    <div class="qr-label">
+    <div v-tilt="{ max: 9 }" v-reveal="{ delay: 0.15, y: 40, scale: 0.92 }" class="qr-label">
       <p class="qr-title">Кафе дъската</p>
       <div class="qr-code" v-html="svg"></div>
       <p class="qr-text">Налей си кафе и сканирай</p>
