@@ -56,6 +56,8 @@ docker run -d --name coffee-db -p 5432:5432 \
   -e POSTGRES_DB=coffee -e POSTGRES_USER=coffee -e POSTGRES_PASSWORD=coffee postgres:16-alpine
 cd backend && mvn spring-boot:run          # :8080, админ admin / admin123 по подразбиране
 cd frontend && npm install && npm run dev  # :5173, /api се проксира към :8080
+# Само фронтенд срещу бекенда на сървъра (истински данни!), PowerShell:
+#   $env:COFFEE_API="http://100.64.0.20:8090"; npm run dev
 
 # Целият стек като на сървъра
 docker compose up -d --build
