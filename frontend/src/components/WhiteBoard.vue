@@ -2,6 +2,7 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import TallyMarks from './TallyMarks.vue'
 import DrawingLayer from './DrawingLayer.vue'
+import SplitText from './fx/SplitText.vue'
 import { api } from '../api'
 import { notify } from '../notify'
 import { confirmAction } from '../confirm'
@@ -212,15 +213,23 @@ onUnmounted(() => {
   <section ref="frame" class="board-frame" aria-labelledby="board-title">
     <div ref="boardEl" class="board">
       <DrawingLayer ref="drawing" :color="drawColor" @clearing="sweep" />
-      <h2 id="board-title" class="board-title">Кафета</h2>
+      <SplitText
+        id="board-title"
+        tag="h2"
+        class="board-title"
+        text="Кафета"
+        :stagger="0.07"
+        :from="{ yPercent: 60, autoAlpha: 0, rotation: -12, scale: 0.6 }"
+      />
 
       <TransitionGroup v-if="shown.length" name="board-row" tag="ul" class="board-rows">
         <li
-          v-for="e in shown"
+          v-for="(e, i) in shown"
           :key="e.id"
           :data-board-row="e.id"
           class="board-row"
           :class="{ 'is-me': e.id === currentUserId }"
+          :style="{ '--row': Math.min(i, 12) }"
         >
           <span class="board-name">
             {{ e.displayName }}<span v-if="e.id === currentUserId" class="visually-hidden"> (ти)</span>
@@ -306,6 +315,7 @@ onUnmounted(() => {
   gap: 1rem;
 }
 .board-name {
+  justify-self: start;
   font-family: var(--font-hand);
   font-weight: 700;
   font-size: 1.7rem;
@@ -404,10 +414,24 @@ onUnmounted(() => {
   75% { transform: translateX(9px) rotate(-4deg); }
 }
 
-/* ред, който изчезва при последното изпито кафе */
-.board-row-enter-active { transition: opacity 0.4s ease-out; }
+/* редовете се „изписват“ един след друг: името се показва отляво надясно като с маркер */
+.board-row-enter-active {
+  transition: opacity 0.4s ease-out, transform 0.5s cubic-bezier(0.2, 1.3, 0.4, 1);
+  transition-delay: calc(var(--row, 0) * 70ms);
+}
+.board-row-enter-active .board-name {
+  transition: clip-path 0.55s cubic-bezier(0.6, 0, 0.3, 1);
+  transition-delay: calc(var(--row, 0) * 70ms + 80ms);
+}
+.board-row-enter-from { opacity: 0; transform: translateX(-14px); }
+.board-row-enter-from .board-name { clip-path: inset(0 100% 0 0); }
 .board-row-leave-active { transition: opacity 0.6s ease-in; }
-.board-row-enter-from, .board-row-leave-to { opacity: 0; }
+.board-row-leave-to { opacity: 0; }
+.board-row-move { transition: transform 0.5s cubic-bezier(0.3, 1.2, 0.5, 1); }
+
+/* лек „маркерен“ наклон на името при посочване */
+.board-name { display: inline-block; transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.board-row:hover .board-name { transform: rotate(-1.5deg) translateX(3px); }
 
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;

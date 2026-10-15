@@ -9,6 +9,12 @@ import TallyMarks from '../components/TallyMarks.vue'
 import WhiteBoard from '../components/WhiteBoard.vue'
 import DrinkOverlay from '../components/DrinkOverlay.vue'
 import QuantityStepper from '../components/QuantityStepper.vue'
+import SplitText from '../components/fx/SplitText.vue'
+import CountUp from '../components/fx/CountUp.vue'
+import ShinyText from '../components/fx/ShinyText.vue'
+import SteamCup from '../components/fx/SteamCup.vue'
+import { burst } from '../motion/burst'
+import { gsap, reducedMotion, afterTick } from '../motion'
 
 const UNDO_MS = 10 * 60 * 1000
 const REFRESH_MS = 20 * 1000
@@ -135,7 +141,8 @@ function undo() {
   return run(() => api('/me/consumptions/last', { method: 'DELETE' }), 'Последното кафе е върнато на дъската.')
 }
 
-async function buy(pkg) {
+async function buy(pkg, event) {
+  const button = event?.currentTarget
   const quantity = qty(pkg)
   const total = pkg.coffeeCount * quantity
   const price = pkg.price * quantity
@@ -149,21 +156,45 @@ async function buy(pkg) {
     () => api('/me/purchases', { method: 'POST', body: { packageId: pkg.id, quantity } }),
     `Добавени ${coffees(total)} към дъската ти.`
   )
-  if (done) quantities[pkg.id] = 1
+  if (done) {
+    quantities[pkg.id] = 1
+    burst(button, { kind: 'strokes', count: Math.min(8 + total, 26) }) // нови чертички за дъската
+  }
+}
+
+/* Нов ред в историята изплува отгоре и за миг светва. */
+function historyEnter(el, done) {
+  if (reducedMotion()) return done()
+  gsap
+    .timeline({ onComplete: done })
+    .from(el, { y: -16, autoAlpha: 0, duration: 0.45, ease: 'back.out(1.6)' })
+    .fromTo(el, { backgroundColor: 'rgba(241, 230, 214, 1)' }, { backgroundColor: 'rgba(241, 230, 214, 0)', duration: 1.4, ease: 'power1.out', clearProps: 'backgroundColor' }, 0)
+}
+function historyLeave(el, done) {
+  if (reducedMotion()) return afterTick(done)
+  gsap.to(el, { x: 30, autoAlpha: 0, duration: 0.3, ease: 'power2.in', onComplete: done })
 }
 </script>
 
 <template>
   <div class="home">
-    <section class="panel balance" aria-labelledby="balance-title">
-      <p id="balance-title" class="greeting">Здравей, {{ auth.user?.displayName }}</p>
+    <section v-spotlight class="panel balance" aria-labelledby="balance-title">
+      <SteamCup class="balance-cup" :size="76" :delay="0.4" />
+      <SplitText
+        id="balance-title"
+        class="greeting"
+        split="words"
+        :text="`Здравей, ${auth.user?.displayName ?? ''}`"
+        :stagger="0.08"
+        :delay="0.15"
+      />
       <template v-if="unlimited">
         <TallyMarks :count="0" unlimited />
         <p class="figure"><span class="figure-unit">Имаш безкрайни кафета</span></p>
       </template>
       <template v-else>
         <p class="figure">
-          <span class="figure-number hand">{{ balance }}</span>
+          <CountUp class="figure-number hand" :value="balance" :duration="1.4" :delay="0.2" />
           <span class="figure-unit">{{ balance === 1 ? 'кафе' : 'кафета' }} на дъската</span>
         </p>
         <TallyMarks :count="balance" />
@@ -172,22 +203,29 @@ async function buy(pkg) {
         Нямаш налични кафета. Купи пакет, за да отбелязваш изпитите.
       </p>
       <div class="balance-actions">
-        <button class="btn btn-primary btn-drink" :disabled="busy || (!unlimited && balance === 0)" @click="drink">
-          Изпих кафе
+        <button
+          v-magnet="{ strength: 0.25, padding: 28 }"
+          class="btn btn-primary btn-drink"
+          :disabled="busy || (!unlimited && balance === 0)"
+          @click="drink"
+        >
+          <ShinyText base="#D9E3FA" :disabled="busy || (!unlimited && balance === 0)">Изпих кафе</ShinyText>
         </button>
-        <button v-if="canUndo" class="btn btn-quiet" :disabled="busy" @click="undo">
-          Отмени последното
-        </button>
+        <Transition name="undo-pop">
+          <button v-if="canUndo" class="btn btn-quiet" :disabled="busy" @click="undo">
+            Отмени последното
+          </button>
+        </Transition>
       </div>
     </section>
 
-    <section class="panel packages" aria-labelledby="packages-title">
+    <section v-spotlight v-reveal="{ delay: 0.12, y: 36 }" class="panel packages" aria-labelledby="packages-title">
       <h2 id="packages-title">Зареди кафета</h2>
       <p v-if="unlimited" class="hint">
         Не е нужно да купуваш пакети. Отбелязвай изпитите кафета, за да се виждат в статистиката.
       </p>
       <p v-else class="hint">Плащаш предварително и кафетата се добавят към твоята дъска.</p>
-      <ul v-if="packages.length && !unlimited" class="package-list">
+      <ul v-if="packages.length && !unlimited" v-reveal="{ children: 'li', delay: 0.25, x: 24, y: 0 }" class="package-list">
         <li v-for="p in packages" :key="p.id">
           <div class="package-info">
             <p class="package-name">{{ p.name }}</p>
@@ -202,7 +240,9 @@ async function buy(pkg) {
               :label="`Брой ${p.name}`"
               @update:model-value="(v) => (quantities[p.id] = v)"
             />
-            <button class="btn package-price" :disabled="busy" @click="buy(p)">{{ money(p.price * qty(p)) }}</button>
+            <button v-magnet="{ strength: 0.2, padding: 16 }" class="btn package-price" :disabled="busy" @click="buy(p, $event)">
+              {{ money(p.price * qty(p)) }}
+            </button>
           </div>
         </li>
       </ul>
@@ -210,15 +250,24 @@ async function buy(pkg) {
     </section>
 
     <WhiteBoard
+      v-reveal="{ y: 48, duration: 1 }"
       class="board-area"
       :entries="board"
       :current-user-id="auth.user?.id ?? null"
       :loading="loading"
     />
 
-    <section class="history" aria-labelledby="history-title">
+    <section v-reveal class="history" aria-labelledby="history-title">
       <h2 id="history-title">История</h2>
-      <ol v-if="activity.length" class="activity">
+      <TransitionGroup
+        v-if="activity.length"
+        v-reveal="{ children: 'li', stagger: 0.04, y: 16 }"
+        tag="ol"
+        class="activity"
+        :css="false"
+        @enter="historyEnter"
+        @leave="historyLeave"
+      >
         <li v-for="a in activity" :key="a.type + a.id" :class="a.type === 'PURCHASE' ? 'is-purchase' : ''">
           <span class="activity-when">{{ dateTime(a.createdAt) }}</span>
           <span class="activity-what">
@@ -226,10 +275,10 @@ async function buy(pkg) {
           </span>
           <span class="activity-delta">{{ a.type === 'PURCHASE' ? `+${a.coffees}` : '−1' }}</span>
         </li>
-      </ol>
+      </TransitionGroup>
       <p v-else-if="!loading" class="hint">Тук ще се появят покупките и изпитите ти кафета.</p>
     </section>
-     <DrinkOverlay
+    <DrinkOverlay
       :show="drinkOverlay"
       :message="drinkMessage"
       :warning="drinkWarning"
@@ -245,17 +294,29 @@ async function buy(pkg) {
   gap: 1.25rem;
   align-items: start;
 }
-.balance { display: grid; gap: 1.1rem; padding: 2rem; }
+.balance { position: relative; display: grid; gap: 1.1rem; padding: 2rem; overflow: hidden; }
+.balance-cup { position: absolute; top: 1.6rem; right: 1.4rem; }
 .greeting { color: var(--muted); font-weight: 500; }
 .figure { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
 .figure-number { font-size: clamp(5rem, 14vw, 7.5rem); }
 .figure-unit { font-size: var(--step-1); font-weight: 500; }
 .balance-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; }
-.btn-drink { font-size: var(--step-1); padding: 0.9rem 2rem; border-radius: 10px; }
+.btn-drink {
+  font-size: var(--step-1);
+  padding: 0.9rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 26px -12px rgba(30, 75, 175, 0.7);
+}
+.btn-drink:disabled { box-shadow: none; }
+
+.undo-pop-enter-active { transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.2, 1.5, 0.4, 1); }
+.undo-pop-leave-active { transition: opacity 0.2s ease, transform 0.2s ease-in; }
+.undo-pop-enter-from, .undo-pop-leave-to { opacity: 0; transform: translateX(-10px) scale(0.9); }
 
 .packages { display: grid; gap: 0.25rem; }
 .package-list { list-style: none; padding: 0; margin: 1rem 0 0; }
 .package-list li {
+  transition: background-color 0.25s ease, padding 0.25s ease;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -286,9 +347,14 @@ async function buy(pkg) {
 .activity-delta { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
 .is-purchase .activity-delta { color: var(--green); }
 
+@media (hover: hover) {
+  .package-list li:hover { background: var(--board); padding-inline: 0.6rem; }
+}
+
 @media (max-width: 760px) {
   .home { grid-template-columns: 1fr; }
   .balance { padding: 1.5rem; }
+  .balance-cup { width: 58px; height: 58px; top: 1.2rem; right: 1rem; }
   .btn-drink { width: 100%; }
   .activity li { grid-template-columns: 1fr auto; }
   .activity-when { grid-column: 1 / -1; }

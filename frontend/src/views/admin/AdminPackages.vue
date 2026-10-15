@@ -64,7 +64,7 @@ onMounted(load)
 
 <template>
   <div class="packages">
-    <form class="panel" @submit.prevent="save">
+    <form v-spotlight v-reveal class="panel" @submit.prevent="save">
       <h2>{{ editingId ? 'Промени пакет' : 'Нов пакет' }}</h2>
       <p class="hint">Промяната на пакет не засяга вече направените покупки.</p>
       <div class="form-grid">
@@ -99,7 +99,7 @@ onMounted(load)
       </div>
     </form>
 
-    <section class="panel">
+    <section v-spotlight v-reveal="{ delay: 0.1 }" class="panel">
       <h2>Пакети</h2>
       <div class="table-wrap">
         <table>
@@ -113,8 +113,8 @@ onMounted(load)
               <th></th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="p in packages" :key="p.id" :class="{ 'is-muted': !p.active }">
+          <TransitionGroup tag="tbody" name="row-fade">
+            <tr v-for="(p, i) in packages" :key="p.id" :class="{ 'is-muted': !p.active }" :style="{ '--i': Math.min(i, 15) }">
               <td>{{ p.name }}</td>
               <td class="num">{{ p.coffeeCount }}</td>
               <td class="num">{{ money(p.price) }}</td>
@@ -125,10 +125,10 @@ onMounted(load)
               </td>
               <td class="num"><button class="btn btn-small" @click="edit(p)">Промени</button></td>
             </tr>
-            <tr v-if="!loading && !packages.length">
+            <tr v-if="!loading && !packages.length" key="empty">
               <td colspan="6" class="hint">Няма пакети. Добави първия отгоре.</td>
             </tr>
-          </tbody>
+          </TransitionGroup>
         </table>
       </div>
     </section>
@@ -136,6 +136,11 @@ onMounted(load)
 </template>
 
 <style scoped>
+.row-fade-enter-active { transition: opacity 0.35s ease, transform 0.35s ease; transition-delay: calc(var(--i, 0) * 40ms); }
+.row-fade-leave-active { transition: opacity 0.25s ease; }
+.row-fade-move { transition: transform 0.45s cubic-bezier(0.3, 1.1, 0.4, 1); }
+.row-fade-enter-from { opacity: 0; transform: translateY(8px); }
+.row-fade-leave-to { opacity: 0; }
 .packages { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 .panel h2 + .hint { margin: 0.25rem 0 1rem; }
 .form-foot { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; }

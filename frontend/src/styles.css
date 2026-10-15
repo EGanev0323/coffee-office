@@ -52,6 +52,18 @@ a { color: var(--marker); }
 }
 
 /* ---------- обща рамка ---------- */
+.topbar-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.topbar-wrap.is-scrolled {
+  background: rgba(243, 245, 244, 0.82);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+  box-shadow: 0 1px 0 var(--rule);
+}
 .topbar {
   display: flex;
   align-items: center;
@@ -69,9 +81,24 @@ a { color: var(--marker); }
   color: var(--ink);
   text-decoration: none;
   line-height: 1;
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
-.mainnav { display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
+.brand:hover { transform: rotate(-3deg) scale(1.04); }
+.mainnav { position: relative; display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
+.mainnav-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--rule), 0 2px 8px rgba(43, 31, 24, 0.06);
+  opacity: 0;
+  pointer-events: none;
+}
 .mainnav a, .linklike {
+  position: relative;
+  z-index: 1;
   font: inherit;
   font-size: var(--step--1);
   font-weight: 500;
@@ -82,9 +109,10 @@ a { color: var(--marker); }
   padding: 0.45rem 0.7rem;
   border-radius: 8px;
   cursor: pointer;
+  transition: color 0.2s ease;
 }
-.mainnav a:hover, .linklike:hover { color: var(--ink); background: rgba(43, 31, 24, 0.05); }
-.mainnav a.is-active { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--rule); }
+.mainnav a:hover, .linklike:hover { color: var(--ink); }
+.mainnav a.is-active { color: var(--ink); }
 
 .page {
   max-width: 1080px;
@@ -119,11 +147,17 @@ a { color: var(--marker); }
   color: var(--ink);
   cursor: pointer;
   white-space: nowrap;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.25s ease, scale 0.15s ease;
 }
 .btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn:active:not(:disabled) { scale: 0.96; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-primary { background: var(--marker); border-color: var(--marker); color: #fff; }
-.btn-primary:hover:not(:disabled) { background: #183d90; border-color: #183d90; }
+.btn-primary:hover:not(:disabled) {
+  background: #183d90;
+  border-color: #183d90;
+  box-shadow: 0 8px 22px -8px rgba(30, 75, 175, 0.65);
+}
 .btn-danger { color: var(--red); }
 .btn-danger:hover:not(:disabled) { border-color: var(--red); background: var(--red-soft); }
 .btn-danger-fill { background: var(--red); border-color: var(--red); color: #fff; }
@@ -144,7 +178,13 @@ a { color: var(--marker); }
   color: var(--ink);
   width: 100%;
 }
-.field input:focus, .field select:focus { outline: 2px solid var(--marker); outline-offset: 0; border-color: var(--marker); }
+.field input, .field select { transition: border-color 0.2s ease, box-shadow 0.25s ease; }
+.field input:focus, .field select:focus {
+  outline: 2px solid var(--marker);
+  outline-offset: 0;
+  border-color: var(--marker);
+  box-shadow: 0 0 0 5px var(--marker-soft);
+}
 .check { display: flex; align-items: center; gap: 0.5rem; font-size: var(--step--1); font-weight: 500; }
 .check input { width: 1.1rem; height: 1.1rem; accent-color: var(--marker); }
 .form-error { color: var(--red); font-size: var(--step--1); }
@@ -221,12 +261,43 @@ dialog::backdrop { background: rgba(43, 31, 24, 0.35); }
 .dialog-body { padding: 1.5rem; display: grid; gap: 1rem; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap; }
 
+/* ---------- ефекти (motion/) ---------- */
+/* прожектор, който следва курсора върху панела (v-spotlight) */
+.spotlight { position: relative; isolation: isolate; }
+.spotlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  background: radial-gradient(420px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(30, 75, 175, 0.07), transparent 60%);
+  transition: opacity 0.35s ease;
+}
+.spotlight:hover::after { opacity: 1; }
+
+/* летящи зърна и чертички (motion/burst.js) */
+.fx-burst-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 70;
+  overflow: hidden;
+}
+.fx-burst-piece { position: absolute; top: 0; left: 0; display: block; will-change: transform; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
 @media (max-width: 520px) {
   .topbar { padding: 0.9rem 1rem 0.5rem; }
+  .topbar-wrap.is-scrolled .topbar { padding-bottom: 0.6rem; }
   .brand { font-size: 1.75rem; }
   .mainnav { gap: 0; margin-left: -0.5rem; }
   .mainnav a, .linklike { padding: 0.4rem 0.5rem; }

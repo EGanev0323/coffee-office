@@ -5,6 +5,9 @@ import { api } from '../api'
 import { useAuthStore } from '../stores/auth'
 import { coffees } from '../format'
 import photo from '../assets/coffee-face.jpg'
+import SteamCup from '../components/fx/SteamCup.vue'
+import { gsap, reducedMotion, SplitText, afterTick } from '../motion'
+import { burst } from '../motion/burst'
 
 /*
   Отваря се от QR кода на кафемашината. Отбелязва кафето веднага при отваряне,
@@ -77,6 +80,28 @@ onMounted(async () => {
 
 onUnmounted(() => clearInterval(timer))
 
+/* Смяна на състоянията: старото избледнява, новото изплува; снимката „пада“ като в DrinkOverlay. */
+function stageEnter(el, done) {
+  if (reducedMotion()) return done()
+  const polaroid = el.querySelector('.polaroid')
+  if (!polaroid) {
+    gsap.fromTo(el, { y: 20, autoAlpha: 0, scale: 0.97 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)', clearProps: 'all', onComplete: done })
+    return
+  }
+  const caption = polaroid.querySelector('figcaption')
+  const split = SplitText.create(caption, { type: 'chars', aria: 'auto' })
+  gsap
+    .timeline({ onComplete: () => { split.revert(); done() } })
+    .fromTo(polaroid, { y: -180, rotation: -24, scale: 0.6, autoAlpha: 0 }, { y: 0, rotation: -2, scale: 1, autoAlpha: 1, duration: 1, ease: 'elastic.out(1, 0.55)' })
+    .add(() => burst(polaroid, { kind: 'beans', count: 20, power: 1.2 }), 0.3)
+    .from(split.chars, { yPercent: 80, autoAlpha: 0, rotation: () => gsap.utils.random(-25, 25), duration: 0.5, stagger: 0.035, ease: 'back.out(2.2)' }, 0.4)
+    .from(el.querySelectorAll('.remaining, .undo, .to-board'), { y: 16, autoAlpha: 0, stagger: 0.08, duration: 0.5 }, 0.6)
+}
+function stageLeave(el, done) {
+  if (reducedMotion()) return afterTick(done)
+  gsap.to(el, { y: -14, autoAlpha: 0, duration: 0.2, ease: 'power2.in', onComplete: done })
+}
+
 async function drink() {
   state.value = 'working'
   try {
@@ -119,9 +144,13 @@ async function undo() {
 
 <template>
   <div class="drink-page">
-    <p v-if="state === 'working'" class="working hand" role="status">Отбелязвам…</p>
+    <Transition :css="false" mode="out-in" @enter="stageEnter" @leave="stageLeave">
+    <div v-if="state === 'working'" key="working" class="working-stage" role="status">
+      <SteamCup :size="120" />
+      <p class="working hand">Отбелязвам…</p>
+    </div>
 
-    <section v-else-if="state === 'confirm'" class="panel message">
+    <section v-else-if="state === 'confirm'" key="confirm" class="panel message">
       <h1>Току-що отбеляза кафе</h1>
       <p class="hint">Преди {{ lastAgo }} сек. Наистина ли е още едно?</p>
       <div class="actions">
@@ -130,8 +159,9 @@ async function undo() {
       </div>
     </section>
 
-    <template v-else-if="state === 'done'">
-      <figure class="polaroid">
+    <div v-else-if="state === 'done'" key="done" class="done-stage">
+      <figure v-tilt="{ max: 8 }" class="polaroid">
+        <span class="polaroid-pin" aria-hidden="true"></span>
         <img :src="photo" alt="" width="280" height="280" />
         <figcaption :class="{ 'is-warning': caption.warning }">{{ caption.text }}</figcaption>
       </figure>
@@ -145,16 +175,16 @@ async function undo() {
           <div class="undo-bar" :style="{ width: `${(secondsLeft / UNDO_SECONDS) * 100}%` }"></div>
         </div>
       </div>
-      <RouterLink to="/" class="btn btn-quiet">Към дъската</RouterLink>
-    </template>
+      <RouterLink to="/" class="btn btn-quiet to-board">Към дъската</RouterLink>
+    </div>
 
-    <section v-else-if="state === 'undone'" class="panel message">
+    <section v-else-if="state === 'undone'" key="undone" class="panel message">
       <h1>Отменено</h1>
       <p class="hint">Кафето е върнато на дъската. {{ remaining }}</p>
       <RouterLink to="/" class="btn btn-primary btn-big">Към дъската</RouterLink>
     </section>
 
-    <section v-else-if="state === 'already'" class="panel message">
+    <section v-else-if="state === 'already'" key="already" class="panel message">
       <h1>Нищо не е отбелязано</h1>
       <p class="hint">Този линк от QR кода вече е бил отворен. Ако пиеш кафе сега, натисни бутона.</p>
       <div class="actions">
@@ -163,11 +193,12 @@ async function undo() {
       </div>
     </section>
 
-    <section v-else-if="state === 'error'" class="panel message">
+    <section v-else-if="state === 'error'" key="error" class="panel message">
       <h1>Кафето не е отбелязано</h1>
       <p class="form-error" role="alert">{{ error }}</p>
       <RouterLink to="/" class="btn btn-primary btn-big">Към дъската</RouterLink>
     </section>
+    </Transition>
   </div>
 </template>
 
@@ -182,6 +213,8 @@ async function undo() {
   padding: 1rem 0 2rem;
 }
 .working { font-size: 2.6rem; }
+.working-stage, .done-stage { display: grid; justify-items: center; gap: 1.25rem; }
+.working-stage { gap: 0.5rem; }
 
 .polaroid {
   margin: 0;
@@ -190,7 +223,18 @@ async function undo() {
   border-radius: 6px;
   box-shadow: 0 18px 50px rgba(43, 31, 24, 0.22);
   transform: rotate(-2deg);
-  animation: pop 0.38s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  position: relative;
+}
+.polaroid-pin {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #E46A5C, var(--red) 60%, #8A251B);
+  box-shadow: 0 3px 6px rgba(43, 31, 24, 0.35);
 }
 .polaroid img {
   display: block;
@@ -210,10 +254,6 @@ async function undo() {
   max-width: min(280px, 72vw);
 }
 .polaroid figcaption.is-warning { color: var(--red); }
-@keyframes pop {
-  from { transform: scale(0.8) rotate(-8deg); opacity: 0; }
-  to { transform: rotate(-2deg); opacity: 1; }
-}
 
 .remaining { font-weight: 500; }
 
