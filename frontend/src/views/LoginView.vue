@@ -95,6 +95,7 @@ async function submit() {
 .login {
   position: relative;
   min-height: calc(100vh - 4rem);
+  min-height: calc(100dvh - 4rem);
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   gap: 3rem;

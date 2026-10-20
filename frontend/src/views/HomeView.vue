@@ -14,7 +14,7 @@ import CountUp from '../components/fx/CountUp.vue'
 import ShinyText from '../components/fx/ShinyText.vue'
 import SteamCup from '../components/fx/SteamCup.vue'
 import { burst } from '../motion/burst'
-import { gsap, reducedMotion, afterTick } from '../motion'
+import { afterTick, gsap, haptic, reducedMotion } from '../motion'
 
 const UNDO_MS = 10 * 60 * 1000
 const REFRESH_MS = 20 * 1000
@@ -51,6 +51,34 @@ const canUndo = computed(() => {
   const last = activity.value[0]
   return !!last && last.type === 'CONSUMPTION' && now.value - new Date(last.createdAt).getTime() < UNDO_MS
 })
+
+/*
+  Плаващ бутон „Изпих кафе“ над лентата с табове – показва се, когато големият бутон е скролнат извън екрана,
+  за да може да се отбележи кафе с палеца от всяко място на страницата.
+*/
+const drinkBtn = ref(null)
+const drinkBtnVisible = ref(true)
+const canDrink = computed(() => !loading.value && (unlimited.value || balance.value > 0))
+const showFab = computed(() => canDrink.value && !drinkBtnVisible.value && !drinkOverlay.value)
+let drinkObserver
+
+function fabEnter(el, done) {
+  if (reducedMotion()) return done()
+  gsap.fromTo(el, { y: 30, scale: 0.8, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.45, ease: 'back.out(2)', onComplete: done })
+}
+function fabLeave(el, done) {
+  if (reducedMotion()) return afterTick(done)
+  gsap.to(el, { y: 30, scale: 0.85, autoAlpha: 0, duration: 0.2, ease: 'power2.in', onComplete: done })
+}
+
+onMounted(() => {
+  const target = drinkBtn.value
+  if (target && 'IntersectionObserver' in window) {
+    drinkObserver = new IntersectionObserver(([entry]) => { drinkBtnVisible.value = entry.isIntersecting }, { threshold: 0 })
+    drinkObserver.observe(target)
+  }
+})
+onUnmounted(() => drinkObserver?.disconnect())
 
 onMounted(() => {
   clock = setInterval(() => { now.value = Date.now() }, 15000)
@@ -119,7 +147,10 @@ async function run(action, successMessage) {
 
 async function drink() {
   const ok = await run(() => api('/me/consumptions', { method: 'POST' }))
-  if (ok) showDrinkOverlay(drinksToday())
+  if (ok) {
+    haptic([18, 60, 18])
+    showDrinkOverlay(drinksToday())
+  }
 }
 
 function showDrinkOverlay(count) {
@@ -158,6 +189,7 @@ async function buy(pkg, event) {
   )
   if (done) {
     quantities[pkg.id] = 1
+    haptic(25)
     burst(button, { kind: 'strokes', count: Math.min(8 + total, 26) }) // нови чертички за дъската
   }
 }
@@ -205,6 +237,7 @@ function historyLeave(el, done) {
       <div class="balance-actions">
         <button
           v-magnet="{ strength: 0.25, padding: 28 }"
+          ref="drinkBtn"
           class="btn btn-primary btn-drink"
           :disabled="busy || (!unlimited && balance === 0)"
           @click="drink"
@@ -278,6 +311,19 @@ function historyLeave(el, done) {
       </TransitionGroup>
       <p v-else-if="!loading" class="hint">Тук ще се появят покупките и изпитите ти кафета.</p>
     </section>
+    <Teleport to="body">
+      <Transition :css="false" @enter="fabEnter" @leave="fabLeave">
+        <button v-if="showFab" type="button" class="drink-fab" :disabled="busy" @click="drink">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4.5 9h12v5.5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z" />
+            <path d="M16.5 10.5h1.2a2.6 2.6 0 0 1 0 5.2h-1.5" />
+          </svg>
+          Изпих кафе
+          <span v-if="!unlimited" class="drink-fab-count" :aria-label="`остават ${balance}`">{{ balance }}</span>
+        </button>
+      </Transition>
+    </Teleport>
+
     <DrinkOverlay
       :show="drinkOverlay"
       :message="drinkMessage"
@@ -347,6 +393,53 @@ function historyLeave(el, done) {
 .activity-delta { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
 .is-purchase .activity-delta { color: var(--green); }
 
+/* плаващият бутон (телепортиран в body, затова :global) */
+:global(.drink-fab) {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--tabbar-h) + 0.75rem + var(--safe-bottom));
+  translate: -50% 0;
+  z-index: 44;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 52px;
+  padding: 0 0.9rem 0 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--marker);
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  font-size: var(--step-0);
+  box-shadow: 0 12px 28px -10px rgba(30, 75, 175, 0.75), 0 2px 6px rgba(43, 31, 24, 0.15);
+  cursor: pointer;
+  white-space: nowrap;
+}
+:global(.drink-fab:active) { scale: 0.95; }
+:global(.drink-fab:disabled) { opacity: 0.6; }
+:global(.drink-fab svg) {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:global(.drink-fab-count) {
+  min-width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-family: var(--font-hand);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
 @media (hover: hover) {
   .package-list li:hover { background: var(--board); padding-inline: 0.6rem; }
 }
@@ -355,8 +448,16 @@ function historyLeave(el, done) {
   .home { grid-template-columns: 1fr; }
   .balance { padding: 1.5rem; }
   .balance-cup { width: 58px; height: 58px; top: 1.2rem; right: 1rem; }
-  .btn-drink { width: 100%; }
-  .activity li { grid-template-columns: 1fr auto; }
-  .activity-when { grid-column: 1 / -1; }
+  .btn-drink { width: 100%; min-height: 60px; font-size: 1.25rem; }
+  /* на телефон: какво е станало отгоре, датата по-дребно отдолу, промяната вдясно */
+  .activity li {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "what delta" "when delta";
+    row-gap: 0.1rem;
+    padding: 0.7rem 0;
+  }
+  .activity-what { grid-area: what; font-size: var(--step-0); }
+  .activity-when { grid-area: when; font-size: 0.8125rem; }
+  .activity-delta { grid-area: delta; align-self: center; font-size: var(--step-0); }
 }
 </style>

@@ -117,15 +117,15 @@ onMounted(load)
     <section v-if="stats" v-spotlight v-reveal="{ delay: 0.1 }" class="panel">
       <h2>Кой колко кафета има</h2>
       <p class="hint">„Налични“ е текущият баланс. Останалите колони са само за {{ label }}.</p>
-      <div class="table-wrap">
-        <table>
+      <div class="table-wrap" data-lenis-prevent>
+        <table class="ptable">
           <thead>
             <tr>
               <th :aria-sort="ariaSort('displayName')"><button class="sort-btn" @click="sortBy('displayName')">Колега</button></th>
               <th class="num" :aria-sort="ariaSort('balance')"><button class="sort-btn" @click="sortBy('balance')">Налични</button></th>
-              <th class="num" :aria-sort="ariaSort('bought')"><button class="sort-btn" @click="sortBy('bought')">Купени</button></th>
-              <th class="num" :aria-sort="ariaSort('consumed')"><button class="sort-btn" @click="sortBy('consumed')">Изпити</button></th>
-              <th class="num" :aria-sort="ariaSort('spent')"><button class="sort-btn" @click="sortBy('spent')">Платени</button></th>
+              <th class="num col-extra" :aria-sort="ariaSort('bought')"><button class="sort-btn" @click="sortBy('bought')">Купени</button></th>
+              <th class="num col-extra" :aria-sort="ariaSort('consumed')"><button class="sort-btn" @click="sortBy('consumed')">Изпити</button></th>
+              <th class="num col-extra" :aria-sort="ariaSort('spent')"><button class="sort-btn" @click="sortBy('spent')">Платени</button></th>
             </tr>
           </thead>
           <TransitionGroup v-reveal="{ children: 'tr', stagger: 0.04, y: 12 }" tag="tbody" name="row-sort">
@@ -133,13 +133,14 @@ onMounted(load)
               <td>
                 {{ u.displayName }}
                 <span v-if="!u.active" class="badge badge-off">неактивен</span>
+                <span class="row-meta">купени {{ u.bought }} · изпити {{ u.consumed }} · {{ money(u.spent) }}</span>
               </td>
               <td class="num">
                 <span class="balance-cell hand" :aria-label="u.unlimited ? 'безкрайни' : null">{{ u.unlimited ? '∞+1' : u.balance }}</span>
               </td>
-              <td class="num">{{ u.bought }}</td>
-              <td class="num">{{ u.consumed }}</td>
-              <td class="num">{{ money(u.spent) }}</td>
+              <td class="num col-extra">{{ u.bought }}</td>
+              <td class="num col-extra">{{ u.consumed }}</td>
+              <td class="num col-extra">{{ money(u.spent) }}</td>
             </tr>
             <tr v-if="!rows.length" key="empty">
               <td colspan="5" class="hint">Няма колеги. Добави ги от раздел „Колеги“.</td>
@@ -152,28 +153,29 @@ onMounted(load)
     <section v-spotlight v-reveal="{ delay: 0.15 }" class="panel">
       <h2>Покупки през месеца</h2>
       <p class="hint">Изтрий покупка, ако е въведена по грешка или парите не са платени.</p>
-      <div class="table-wrap">
-        <table>
+      <div class="table-wrap" data-lenis-prevent>
+        <table class="ptable">
           <thead>
             <tr>
-              <th>Кога</th>
+              <th class="col-extra">Кога</th>
               <th>Колега</th>
-              <th>Пакет</th>
+              <th class="col-extra">Пакет</th>
               <th class="num">Сума</th>
               <th><span class="visually-hidden">Действия</span></th>
             </tr>
           </thead>
           <TransitionGroup tag="tbody" name="row-fade">
             <tr v-for="p in purchases" :key="p.id">
-              <td>{{ dateTime(p.createdAt) }}</td>
+              <td class="col-extra">{{ dateTime(p.createdAt) }}</td>
               <td>
                 {{ p.userName }}
                 <span v-if="p.createdBy && p.createdBy !== p.userName" class="hint">(въведено от {{ p.createdBy }})</span>
+                <span class="row-meta">{{ p.packageName }}<template v-if="p.quantity > 1"> × {{ p.quantity }}</template> · {{ dateTime(p.createdAt) }}</span>
               </td>
-              <td>{{ p.packageName }}<template v-if="p.quantity > 1"> × {{ p.quantity }}</template></td>
+              <td class="col-extra">{{ p.packageName }}<template v-if="p.quantity > 1"> × {{ p.quantity }}</template></td>
               <td class="num">{{ money(p.amount) }}</td>
               <td class="num">
-                <button class="btn btn-danger btn-small" @click="removePurchase(p)">Изтрий</button>
+                <button class="btn btn-danger btn-small" :aria-label="`Изтрий покупката на ${p.userName}`" @click="removePurchase(p)">Изтрий</button>
               </td>
             </tr>
             <tr v-if="!purchases.length" key="empty">
