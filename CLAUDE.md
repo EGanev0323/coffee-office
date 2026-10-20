@@ -12,7 +12,7 @@
 - **Backend:** Java 21, Spring Boot 3.3, Spring Security (stateless JWT, jjwt 0.12), Spring Data JPA / Hibernate, Flyway, PostgreSQL 16
 - **Frontend:** Vue 3 (`<script setup>`), Vite 5, Pinia, Vue Router, без UI библиотеки. Шрифтове през `@fontsource` (Onest, Caveat). `qrcode` за QR етикета.
   Анимации: **GSAP** (+ ScrollTrigger, SplitText) и **Lenis** (плавно скролване); ефектите в `components/fx/` са Vue версии на компоненти от React Bits.
-- **Инфраструктура:** Docker Compose (`db`, `backend`, `frontend`). nginx във `frontend` контейнера сервира Vue и проксира `/api` към `backend:8080`. Публичен достъп през Tailscale Funnel (HTTPS).
+- **Инфраструктура:** Docker Compose (`db`, `backend`, `frontend`, по желание `cloudflared`). nginx във `frontend` контейнера сервира Vue и проксира `/api` към `backend:8080`. Публичен достъп през Cloudflare Tunnel на собствен домейн (`cloudflared`, профил `tunnel`) или през Tailscale Funnel (HTTPS). Фирмени мрежи често спират `*.ts.net`.
 
 ## Структура
 
@@ -149,7 +149,14 @@ docker compose up -d --build
 ```
 
 Специфично за сървъра (не е в git): `APP_PORT=8090`, портът на базата е вързан към Tailscale IP
-(`100.64.0.20:5433:5432`) за достъп с DbVisualizer, публичният достъп е през `tailscale funnel`.
+(`100.64.0.20:5433:5432`) за достъп с DbVisualizer.
+
+Публичен достъп:
+- **Cloudflare Tunnel:** в `.env` `COMPOSE_PROFILES=tunnel` и `CLOUDFLARE_TUNNEL_TOKEN=...`. В Cloudflare
+  (Networking → Tunnels → тунелът → Routes → Published application) адресът сочи към `http://frontend:80`.
+  SSE работи през тунела (heartbeat-ът е 25 сек., под лимита на Cloudflare).
+- **Tailscale Funnel:** `tailscale funnel --bg 8090`. Някои фирмени мрежи прекъсват връзките към `*.ts.net`.
+- При смяна на публичния адрес QR етикетът на кафемашината трябва да се принтира наново (Админ → QR код).
 
 ## Идеи за бъдещето (още не са решени)
 

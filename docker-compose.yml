@@ -44,5 +44,18 @@ services:
     depends_on:
       - backend
 
+  # Cloudflare Tunnel – публичен достъп през собствен домейн (вместо Tailscale Funnel).
+  # Пуска се само ако в .env има COMPOSE_PROFILES=tunnel и CLOUDFLARE_TUNNEL_TOKEN.
+  # В Cloudflare маршрутът на тунела сочи към http://frontend:80.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles: ["tunnel"]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      - frontend
+
 volumes:
   pgdata:
