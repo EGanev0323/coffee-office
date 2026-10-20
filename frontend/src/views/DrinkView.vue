@@ -205,6 +205,7 @@ async function undo() {
 <style scoped>
 .drink-page {
   min-height: calc(100vh - 7rem);
+  min-height: calc(100dvh - var(--tabbar-h) - 7rem - var(--safe-bottom));
   display: grid;
   justify-items: center;
   align-content: center;

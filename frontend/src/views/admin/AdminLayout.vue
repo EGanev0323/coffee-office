@@ -26,7 +26,7 @@ function onLeave(el, done) {
 
 <template>
   <div class="admin">
-    <nav ref="nav" class="subnav" aria-label="Админ секции">
+    <nav ref="nav" class="subnav" aria-label="Админ секции" data-lenis-prevent>
       <RouterLink :to="{ name: 'admin' }" exact-active-class="is-active" active-class="">Месечен отчет</RouterLink>
       <RouterLink :to="{ name: 'admin-users' }">Колеги</RouterLink>
       <RouterLink :to="{ name: 'admin-packages' }">Пакети</RouterLink>
@@ -43,14 +43,26 @@ function onLeave(el, done) {
 
 <style scoped>
 .admin { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-.subnav { position: relative; display: flex; gap: 1.5rem; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.subnav {
+  position: relative;
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--rule);
+  /* на тесен екран секциите се плъзгат настрани, вместо да се пренасят */
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.subnav::-webkit-scrollbar { display: none; }
 .subnav a {
   color: var(--muted);
   text-decoration: none;
   font-weight: 600;
   font-size: var(--step--1);
-  padding: 0.6rem 0;
+  padding: 0.75rem 0;
   margin-bottom: -1px;
+  white-space: nowrap;
+  flex: none;
   transition: color 0.2s ease;
 }
 .subnav a:hover { color: var(--ink); }

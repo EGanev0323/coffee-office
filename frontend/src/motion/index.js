@@ -16,6 +16,15 @@ const fineQuery = window.matchMedia('(hover: hover) and (pointer: fine)')
 
 /** Потребителят е поискал по-малко движение. */
 export const reducedMotion = () => reduceQuery.matches
+const phoneQuery = window.matchMedia('(max-width: 640px)')
+/** Тесен екран – диалозите са „лист“ отдолу. */
+export const isPhone = () => phoneQuery.matches
+
+/** Кратка вибрация като потвърждение (Android; iPhone я пропуска). */
+export function haptic(pattern = 18) {
+  try { navigator.vibrate?.(pattern) } catch { /* не е поддържано */ }
+}
+
 /** Мишка (не телефон) – за магнитни бутони, наклон и прожектор. */
 export const finePointer = () => fineQuery.matches
 
@@ -68,6 +77,27 @@ export function lockScroll(locked) {
 export function scrollToTop() {
   if (lenis) lenis.scrollTo(0, { immediate: true, force: true })
   else window.scrollTo(0, 0)
+}
+
+/** Появата на диалог: на телефон се плъзга отдолу, на компютър изскача в средата. */
+export function dialogIn(el) {
+  if (!el || reducedMotion()) return
+  gsap.killTweensOf(el)
+  if (isPhone()) {
+    gsap.fromTo(el, { yPercent: 100 }, { yPercent: 0, duration: 0.45, ease: 'power3.out', clearProps: 'transform' })
+  } else {
+    gsap.fromTo(el, { y: 24, scale: 0.92, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.45, ease: 'back.out(1.7)', clearProps: 'transform,opacity,visibility' })
+  }
+}
+
+/** Скриване на диалог; onDone затваря самия <dialog>. */
+export function dialogOut(el, onDone) {
+  if (!el || reducedMotion()) return onDone()
+  gsap.killTweensOf(el)
+  const vars = isPhone()
+    ? { yPercent: 100, duration: 0.25, ease: 'power2.in' }
+    : { y: 12, scale: 0.96, autoAlpha: 0, duration: 0.18, ease: 'power2.in' }
+  gsap.to(el, { ...vars, onComplete: () => { onDone(); gsap.set(el, { clearProps: 'all' }) } })
 }
 
 /**

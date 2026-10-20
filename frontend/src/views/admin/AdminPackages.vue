@@ -3,11 +3,13 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { api } from '../../api'
 import { notify } from '../../notify'
 import { money } from '../../format'
+import { reducedMotion } from '../../motion'
 
 const packages = ref([])
 const loading = ref(true)
 const editingId = ref(null)
 const error = ref('')
+const formEl = ref(null)
 const busy = ref(false)
 
 const empty = () => ({ name: '', coffeeCount: 5, price: 2, active: true, sortOrder: 0 })
@@ -31,6 +33,8 @@ function edit(p) {
   editingId.value = p.id
   Object.assign(form, { name: p.name, coffeeCount: p.coffeeCount, price: p.price, active: p.active, sortOrder: p.sortOrder })
   error.value = ''
+  // формата е над списъка – на телефон я вкарваме в екрана
+  formEl.value?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' })
 }
 function cancel() {
   editingId.value = null
@@ -64,7 +68,7 @@ onMounted(load)
 
 <template>
   <div class="packages">
-    <form v-spotlight v-reveal class="panel" @submit.prevent="save">
+    <form ref="formEl" v-spotlight v-reveal class="panel" @submit.prevent="save">
       <h2>{{ editingId ? 'Промени пакет' : 'Нов пакет' }}</h2>
       <p class="hint">Промяната на пакет не засяга вече направените покупки.</p>
       <div class="form-grid">
@@ -101,25 +105,28 @@ onMounted(load)
 
     <section v-spotlight v-reveal="{ delay: 0.1 }" class="panel">
       <h2>Пакети</h2>
-      <div class="table-wrap">
-        <table>
+      <div class="table-wrap" data-lenis-prevent>
+        <table class="ptable">
           <thead>
             <tr>
               <th>Име</th>
-              <th class="num">Кафета</th>
+              <th class="num col-extra">Кафета</th>
               <th class="num">Цена</th>
-              <th class="num">За кафе</th>
-              <th>Видим</th>
+              <th class="num col-extra">За кафе</th>
+              <th class="col-extra">Видим</th>
               <th></th>
             </tr>
           </thead>
           <TransitionGroup tag="tbody" name="row-fade">
             <tr v-for="(p, i) in packages" :key="p.id" :class="{ 'is-muted': !p.active }" :style="{ '--i': Math.min(i, 15) }">
-              <td>{{ p.name }}</td>
-              <td class="num">{{ p.coffeeCount }}</td>
-              <td class="num">{{ money(p.price) }}</td>
-              <td class="num">{{ money(p.price / p.coffeeCount) }}</td>
               <td>
+                {{ p.name }}
+                <span class="row-meta">{{ money(p.price / p.coffeeCount) }} за кафе<template v-if="!p.active"> · скрит</template></span>
+              </td>
+              <td class="num col-extra">{{ p.coffeeCount }}</td>
+              <td class="num">{{ money(p.price) }}</td>
+              <td class="num col-extra">{{ money(p.price / p.coffeeCount) }}</td>
+              <td class="col-extra">
                 <span v-if="p.active" class="badge">да</span>
                 <span v-else class="badge badge-off">скрит</span>
               </td>
@@ -145,4 +152,9 @@ onMounted(load)
 .panel h2 + .hint { margin: 0.25rem 0 1rem; }
 .form-foot { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; }
 .form-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+form.panel { scroll-margin-top: calc(4.5rem + var(--safe-top)); }
+@media (max-width: 640px) {
+  .form-actions { display: grid; }
+  .form-actions .btn { width: 100%; }
+}
 </style>

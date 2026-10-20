@@ -51,11 +51,24 @@ a { color: var(--marker); }
   border-radius: 4px;
 }
 
-/* ---------- обща рамка ---------- */
+/* ---------- обща рамка (приложение за телефон) ---------- */
+:root {
+  --tabbar-h: 64px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --gutter-l: max(1rem, env(safe-area-inset-left, 0px));
+  --gutter-r: max(1rem, env(safe-area-inset-right, 0px));
+}
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: transparent; }
+/* без забавянето за двойно докосване (zoom) върху бутони и линкове */
+a, button, label, input, select, summary, [role="button"] { touch-action: manipulation; }
+
 .topbar-wrap {
   position: sticky;
   top: 0;
   z-index: 40;
+  padding-top: var(--safe-top);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 .topbar-wrap.is-scrolled {
@@ -67,16 +80,13 @@ a { color: var(--marker); }
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
   max-width: 1080px;
   margin: 0 auto;
-  padding: 1rem 1.25rem;
+  padding: 0.85rem var(--gutter-r) 0.6rem var(--gutter-l);
 }
 .brand {
   font-family: var(--font-hand);
-  font-size: 2rem;
+  font-size: 1.85rem;
   font-weight: 700;
   color: var(--ink);
   text-decoration: none;
@@ -84,41 +94,76 @@ a { color: var(--marker); }
   display: inline-block;
   transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
-.brand:hover { transform: rotate(-3deg) scale(1.04); }
-.mainnav { position: relative; display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
-.mainnav-pill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-radius: 8px;
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--rule), 0 2px 8px rgba(43, 31, 24, 0.06);
-  opacity: 0;
-  pointer-events: none;
-}
-.mainnav a, .linklike {
-  position: relative;
-  z-index: 1;
-  font: inherit;
-  font-size: var(--step--1);
-  font-weight: 500;
-  color: var(--muted);
-  text-decoration: none;
-  background: none;
-  border: 0;
-  padding: 0.45rem 0.7rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-.mainnav a:hover, .linklike:hover { color: var(--ink); }
-.mainnav a.is-active { color: var(--ink); }
 
 .page {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 0.5rem 1.25rem 4rem;
+  padding: 0.5rem var(--gutter-r) calc(3rem + var(--safe-bottom)) var(--gutter-l);
 }
+.page.has-tabs { padding-bottom: calc(var(--tabbar-h) + 2.5rem + var(--safe-bottom)); }
+
+/* долната лента с табове – в зоната на палеца */
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+  padding: 0.4rem var(--gutter-r) calc(0.4rem + var(--safe-bottom)) var(--gutter-l);
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
+  box-shadow: 0 -1px 0 var(--rule), 0 -8px 24px -18px rgba(43, 31, 24, 0.35);
+  transition: transform 0.25s ease;
+}
+.tabbar.is-hidden { transform: translateY(110%); }
+.tabbar-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 14px;
+  background: var(--marker-soft);
+  opacity: 0;
+  pointer-events: none;
+}
+.tab {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  max-width: 140px;
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.15rem;
+  border-radius: 14px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease, scale 0.15s ease;
+}
+.tab:active { scale: 0.92; }
+.tab.is-active { color: var(--marker); }
+.tab-icon {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tab.is-active .tab-icon { stroke-width: 2.2; }
+
+/* показва се само на телефон / само на по-широк екран */
+@media (max-width: 640px) { .hide-phone { display: none !important; } }
+@media (min-width: 641px) { .only-phone { display: none !important; } }
 
 .panel {
   background: var(--surface);
@@ -150,6 +195,7 @@ a { color: var(--marker); }
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.25s ease, scale 0.15s ease;
 }
 .btn:hover:not(:disabled) { border-color: var(--ink); }
+@media (hover: none) { .btn:hover:not(:disabled) { border-color: var(--rule); } }
 .btn:active:not(:disabled) { scale: 0.96; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-primary { background: var(--marker); border-color: var(--marker); color: #fff; }
@@ -231,13 +277,15 @@ tr.is-muted td { color: var(--muted); }
 .toasts {
   position: fixed;
   left: 50%;
-  bottom: 1.25rem;
+  bottom: calc(1.25rem + var(--safe-bottom));
+  transition: bottom 0.25s ease;
   transform: translateX(-50%);
   display: grid;
   gap: 0.5rem;
   z-index: 50;
   width: min(92vw, 440px);
 }
+.toasts.is-raised { bottom: calc(var(--tabbar-h) + 0.75rem + var(--safe-bottom)); }
 .toast {
   background: var(--ink);
   color: #fff;
@@ -258,6 +306,8 @@ dialog {
   box-shadow: 0 20px 60px rgba(43, 31, 24, 0.25);
 }
 dialog::backdrop { background: rgba(43, 31, 24, 0.35); }
+/* диалогът сам приема фокуса (autofocus), за да не изскача клавиатурата на телефона */
+dialog:focus, dialog:focus-visible { outline: none; }
 .dialog-body { padding: 1.5rem; display: grid; gap: 1rem; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap; }
 
@@ -296,11 +346,56 @@ dialog::backdrop { background: rgba(43, 31, 24, 0.35); }
 }
 
 @media (max-width: 520px) {
-  .topbar { padding: 0.9rem 1rem 0.5rem; }
-  .topbar-wrap.is-scrolled .topbar { padding-bottom: 0.6rem; }
-  .brand { font-size: 1.75rem; }
-  .mainnav { gap: 0; margin-left: -0.5rem; }
-  .mainnav a, .linklike { padding: 0.4rem 0.5rem; }
-  .page { padding: 0.5rem 1rem 3rem; }
-  .panel { padding: 1.25rem; }
+  .panel { padding: 1.25rem; border-radius: 16px; }
 }
+
+/* ---------- телефон: по-големи цели за пръста ---------- */
+@media (max-width: 640px) {
+  .btn { min-height: 44px; padding-inline: 1.1rem; }
+  .btn-small { min-height: 38px; }
+  .field input, .field select { min-height: 48px; font-size: 1rem; }
+  .check { min-height: 40px; }
+  .check input { width: 1.3rem; height: 1.3rem; }
+  .btn-block-phone { width: 100%; }
+
+  /* диалозите излизат отдолу като „лист“ */
+  dialog {
+    width: 100%;
+    max-width: 100%;
+    margin: auto 0 0;
+    border-radius: 20px 20px 0 0;
+    max-height: calc(100dvh - 2.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  dialog::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 5px;
+    margin: 10px auto 0;
+    border-radius: 3px;
+    background: var(--rule);
+  }
+  .dialog-body { padding: 1rem var(--gutter-r) calc(1.25rem + var(--safe-bottom)) var(--gutter-l); }
+  .dialog-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; gap: 0.5rem; }
+  .dialog-actions .btn { width: 100%; min-height: 50px; font-size: var(--step-0); }
+  /* основното действие отгоре, „Откажи“ отдолу */
+  .dialog-actions .btn-quiet { order: 2; }
+
+  /* таблиците стават списъци: допълнителните колони се крият, а данните им са в реда под името */
+  .ptable th, .ptable td { padding: 0.75rem 0.4rem; }
+  .ptable th:first-child, .ptable td:first-child { padding-left: 0; }
+  .ptable th:last-child, .ptable td:last-child { padding-right: 0; }
+  .ptable .col-extra { display: none; }
+  .ptable .row-meta {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--muted);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+  .ptable td.num { white-space: nowrap; }
+}
+@media (min-width: 641px) { .ptable .row-meta { display: none; } }
+

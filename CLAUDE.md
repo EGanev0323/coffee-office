@@ -35,8 +35,9 @@ frontend/src/
   notify.js, confirm.js   toast и диалог за потвърждение
   format.js         пари (EUR, bg-BG), дати, „1 кафе / N кафета“
   components/       WhiteBoard, TallyMarks, DrawingLayer, DrinkOverlay, ConfirmDialog, ToastStack, QuantityStepper
+  public/           manifest.json, icon.svg и PNG иконите (генерирани от icon.svg)
   components/fx/    SplitText, CountUp, ShinyText, ClickSpark (по React Bits), SteamCup, FloatingBeans
-  motion/           index.js (GSAP + Lenis, reducedMotion, shake, pop, afterTick), directives.js (v-reveal, v-magnet,
+  motion/           index.js (GSAP + Lenis, reducedMotion, isPhone, haptic, dialogIn/Out, shake, pop, afterTick), directives.js (v-reveal, v-magnet,
                     v-tilt, v-spotlight), burst.js (летящи зърна/чертички), pageTransition.js, useSlidingIndicator.js
   views/            Login, Home, Account, Drink (QR), admin/{Overview, Users, Packages, Qr, Layout}
   assets/coffee-face.jpg   лична снимка за „Ти изпи кафе“ – хранилището е private
@@ -107,7 +108,16 @@ Frontend Dockerfile-ът ползва `npm ci`. При добавяне на npm
 - Магнит, наклон и прожектор (`v-magnet`, `v-tilt`, `v-spotlight`) работят само с мишка – на телефон нищо не правят.
 - Елементи със собствено скролване, в които колелцето трябва да е нативно, получават `data-lenis-prevent`.
   Модалните диалози викат `lockScroll(true/false)`.
-- Проверявай изгледа и на мобилен екран (~390 px). Колегите ползват основно телефони.
+- **Приложението се ползва само от телефон** – проектирай и проверявай първо на ~360–430 px.
+  - Навигацията е долна лента с табове (`App.vue`, `.tabbar`), горе е само името. „Изход“ е в „Профил“.
+    Лентата се скрива, докато е отворена клавиатурата. Отстъпите отчитат `env(safe-area-inset-*)` (`--safe-top`, `--safe-bottom`).
+  - Цели за пръста поне 44 px; полетата са ≥ 16 px шрифт (иначе iOS увеличава страницата при фокус).
+  - Диалозите на телефон са „лист“ отдолу (`dialogIn` / `dialogOut` от `motion/`), с `autofocus` на самия `<dialog>`,
+    за да не изскача клавиатурата.
+  - Таблиците са с клас `ptable`: допълнителните колони са `col-extra` (скриват се на телефон), а данните им
+    се показват в `.row-meta` под името.
+  - Hover ефектите да не „залепват“ на телефон – слагай ги в `@media (hover: hover)`.
+- Приложението се инсталира на началния екран (PWA без service worker): `public/manifest.json`, иконите в `public/`.
 
 ## Важни решения (не ги променяй без причина)
 
@@ -157,4 +167,4 @@ docker compose up -d --build
   с уникално основание и потвърждение от админа.
 - Кафе рулетка („Кой черпи днес?“) в реално време през SSE, кафе барометър, значки като магнити,
   лични снимки и реплики за всеки колега, „Отивам за кафе, кой идва?“, кафеман на месеца.
-- PWA (manifest + service worker), за да се инсталира на телефона.
+- Service worker (работа без мрежа, известия) – manifest-ът за инсталиране вече го има.

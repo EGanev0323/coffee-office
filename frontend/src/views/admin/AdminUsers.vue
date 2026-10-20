@@ -5,7 +5,7 @@ import { notify } from '../../notify'
 import { useAuthStore } from '../../stores/auth'
 import { coffees, money } from '../../format'
 import QuantityStepper from '../../components/QuantityStepper.vue'
-import { gsap, lockScroll, reducedMotion } from '../../motion'
+import { dialogIn, dialogOut, lockScroll } from '../../motion'
 
 const auth = useAuthStore()
 const users = ref([])
@@ -62,17 +62,15 @@ function openEditor(u) {
   purchaseQuantity.value = 1
   dialog.value.showModal()
   lockScroll(true)
-  if (!reducedMotion()) {
-    gsap.fromTo(dialog.value, { y: 30, scale: 0.94, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.5, ease: 'back.out(1.6)', clearProps: 'transform,opacity,visibility' })
-  }
+  dialogIn(dialog.value)
 }
 function onDialogClose() {
   editing.value = null
   lockScroll(false)
 }
 function closeEditor() {
-  dialog.value.close()
-  editing.value = null
+  const d = dialog.value
+  dialogOut(d, () => d.close())
 }
 
 async function withBusy(fn) {
@@ -139,7 +137,55 @@ onMounted(load)
 
 <template>
   <div class="users">
-    <form v-spotlight v-reveal class="panel" @submit.prevent="create">
+
+    <section v-spotlight v-reveal class="panel">
+      <h2>Колеги</h2>
+      <p class="hint only-phone">Натисни колега, за да промениш данните му или да запишеш плащане.</p>
+      <div class="table-wrap" data-lenis-prevent>
+        <table class="ptable">
+          <thead>
+            <tr>
+              <th>Име</th>
+              <th class="col-extra">Потребител</th>
+              <th class="col-extra">Роля</th>
+              <th class="num">Налични</th>
+              <th><span class="visually-hidden">Действия</span></th>
+            </tr>
+          </thead>
+          <TransitionGroup tag="tbody" name="row-fade">
+            <tr
+              v-for="(u, i) in users"
+              :key="u.id"
+              class="tap-row"
+              :class="{ 'is-muted': !u.active }"
+              :style="{ '--i': Math.min(i, 15) }"
+              @click="openEditor(u)"
+            >
+              <td>
+                {{ u.displayName }}
+                <span v-if="!u.active" class="badge badge-off">неактивен</span>
+                <span v-else-if="!u.boardVisible" class="badge">скрит от дъската</span>
+                <span class="row-meta">{{ u.username }} · {{ u.role === 'ADMIN' ? 'администратор' : 'колега' }}</span>
+              </td>
+              <td class="col-extra">{{ u.username }}</td>
+              <td class="col-extra">{{ u.role === 'ADMIN' ? 'Администратор' : 'Колега' }}</td>
+              <td class="num">{{ u.unlimited ? '∞+1' : u.balance }}</td>
+              <td class="num">
+                <button class="btn btn-small manage-btn" :aria-label="`Управлявай ${u.displayName}`" @click.stop="openEditor(u)">
+                  <span class="hide-phone">Управлявай</span>
+                  <span class="only-phone" aria-hidden="true">›</span>
+                </button>
+              </td>
+            </tr>
+            <tr v-if="!loading && !users.length" key="empty">
+              <td colspan="5" class="hint">Все още няма колеги.</td>
+            </tr>
+          </TransitionGroup>
+        </table>
+      </div>
+    </section>
+
+    <form v-spotlight v-reveal="{ delay: 0.15 }" class="panel" @submit.prevent="create">
       <h2>Нов колега</h2>
       <p class="hint">Колегата влиза с потребителското име и паролата, после може да си смени паролата от „Профил“.</p>
       <div class="form-grid create-grid">
@@ -163,45 +209,12 @@ onMounted(load)
             <option value="ADMIN">Администратор</option>
           </select>
         </div>
-        <button class="btn btn-primary" :disabled="creating">Създай профил</button>
+        <button class="btn btn-primary btn-block-phone" :disabled="creating">Създай профил</button>
       </div>
       <p v-if="createError" class="form-error" role="alert">{{ createError }}</p>
     </form>
 
-    <section v-spotlight v-reveal="{ delay: 0.1 }" class="panel">
-      <h2>Колеги</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Име</th>
-              <th>Потребител</th>
-              <th>Роля</th>
-              <th class="num">Налични</th>
-              <th><span class="visually-hidden">Действия</span></th>
-            </tr>
-          </thead>
-          <TransitionGroup tag="tbody" name="row-fade">
-            <tr v-for="(u, i) in users" :key="u.id" :class="{ 'is-muted': !u.active }" :style="{ '--i': Math.min(i, 15) }">
-              <td>
-                {{ u.displayName }}
-                <span v-if="!u.active" class="badge badge-off">неактивен</span>
-                <span v-else-if="!u.boardVisible" class="badge">скрит от дъската</span>
-              </td>
-              <td>{{ u.username }}</td>
-              <td>{{ u.role === 'ADMIN' ? 'Администратор' : 'Колега' }}</td>
-              <td class="num">{{ u.unlimited ? '∞+1' : u.balance }}</td>
-              <td class="num"><button class="btn btn-small" @click="openEditor(u)">Управлявай</button></td>
-            </tr>
-            <tr v-if="!loading && !users.length" key="empty">
-              <td colspan="5" class="hint">Все още няма колеги.</td>
-            </tr>
-          </TransitionGroup>
-        </table>
-      </div>
-    </section>
-
-    <dialog ref="dialog" @close="onDialogClose">
+    <dialog ref="dialog" autofocus @close="onDialogClose">
       <div v-if="editing" class="dialog-body">
         <div class="dialog-head">
           <h2>{{ editing.displayName }}</h2>
@@ -285,6 +298,14 @@ dialog { width: min(94vw, 520px); }
 .editor-section { display: grid; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
 .editor-section h3 { font-size: var(--step-0); }
 .editor-section .btn-primary { justify-self: start; }
+.tap-row { cursor: pointer; }
+.tap-row:active td { background: var(--board); }
+@media (max-width: 640px) {
+  .editor-section .btn-primary { justify-self: stretch; }
+  .inline > .btn { flex: 1 1 auto; }
+  .inline-select, .inline-input { min-height: 48px; }
+  .manage-btn { min-width: 44px; min-height: 44px; padding: 0; font-size: 1.5rem; font-weight: 500; border-color: transparent; color: var(--muted); }
+}
 .inline { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 .inline-select, .inline-input {
   flex: 1 1 200px;

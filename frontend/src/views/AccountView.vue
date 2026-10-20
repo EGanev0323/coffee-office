@@ -1,5 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { confirmAction } from '../confirm'
 import { api } from '../api'
 import { useAuthStore } from '../stores/auth'
 import { notify } from '../notify'
@@ -8,6 +10,19 @@ import { shake } from '../motion'
 import { burst } from '../motion/burst'
 
 const auth = useAuthStore()
+const router = useRouter()
+
+async function logout() {
+  const ok = await confirmAction({
+    title: 'Изход',
+    message: 'Ще трябва да влезеш отново с потребителското име и паролата.',
+    confirmText: 'Излез',
+    danger: true
+  })
+  if (!ok) return
+  auth.logout()
+  router.push({ name: 'login' })
+}
 const form = reactive({ currentPassword: '', newPassword: '', repeat: '' })
 const error = ref('')
 const busy = ref(false)
@@ -62,11 +77,20 @@ async function submit() {
         <input id="rep" v-model="form.repeat" type="password" autocomplete="new-password" minlength="6" required />
       </div>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
-      <button ref="submitBtn" v-magnet="{ strength: 0.15, padding: 16 }" class="btn btn-primary" :disabled="busy">Смени паролата</button>
+      <button ref="submitBtn" v-magnet="{ strength: 0.15, padding: 16 }" class="btn btn-primary btn-block-phone" :disabled="busy">Смени паролата</button>
     </form>
+
+    <section v-reveal="{ delay: 0.3 }" class="panel logout">
+      <div>
+        <h2>Изход</h2>
+        <p class="hint">Излизаш само от това устройство.</p>
+      </div>
+      <button type="button" class="btn btn-danger" @click="logout">Излез</button>
+    </section>
   </div>
 </template>
 
 <style scoped>
 .account { max-width: 480px; display: grid; gap: 1rem; }
+.logout { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 </style>

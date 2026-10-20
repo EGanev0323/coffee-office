@@ -2,6 +2,8 @@
 import { toasts } from '../notify'
 import { gsap, reducedMotion, afterTick } from '../motion'
 
+defineProps({ raised: { type: Boolean, default: false } }) // над долната лента с табове
+
 /* Съобщенията изскачат отдолу с лек подскок и отлитат встрани, когато изтекат. */
 function onEnter(el, done) {
   if (reducedMotion()) return done()
@@ -20,7 +22,7 @@ function onLeave(el, done) {
 </script>
 
 <template>
-  <div class="toasts" role="status" aria-live="polite">
+  <div class="toasts" :class="{ 'is-raised': raised }" role="status" aria-live="polite">
     <TransitionGroup :css="false" @enter="onEnter" @leave="onLeave">
       <div
         v-for="t in toasts"
