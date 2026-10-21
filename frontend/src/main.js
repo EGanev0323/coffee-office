@@ -8,6 +8,8 @@ import '@fontsource/onest/500.css'
 import '@fontsource/onest/600.css'
 import '@fontsource/onest/700.css'
 import '@fontsource/caveat/700.css'
+import '@fontsource/oswald/600.css' // надписът на плаката за кафе
+import '@fontsource/oswald/700.css'
 import './styles.css'
 
 const app = createApp(App).use(createPinia()).use(router)

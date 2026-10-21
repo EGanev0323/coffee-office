@@ -10,7 +10,7 @@
 ## Стек
 
 - **Backend:** Java 21, Spring Boot 3.3, Spring Security (stateless JWT, jjwt 0.12), Spring Data JPA / Hibernate, Flyway, PostgreSQL 16
-- **Frontend:** Vue 3 (`<script setup>`), Vite 5, Pinia, Vue Router, без UI библиотеки. Шрифтове през `@fontsource` (Onest, Caveat). `qrcode` за QR етикета.
+- **Frontend:** Vue 3 (`<script setup>`), Vite 5, Pinia, Vue Router, без UI библиотеки. Шрифтове през `@fontsource` (Onest, Caveat, Oswald само за плаката). `qrcode` за QR етикета.
   Анимации: **GSAP** (+ ScrollTrigger, SplitText) и **Lenis** (плавно скролване); ефектите в `components/fx/` са Vue версии на компоненти от React Bits.
 - **Инфраструктура:** Docker Compose (`db`, `backend`, `frontend`). nginx във `frontend` контейнера сервира Vue и проксира `/api` към `backend:8080`. Публичен достъп през Tailscale Funnel (HTTPS).
 
@@ -34,13 +34,13 @@ frontend/src/
   router.js         guard: вход, зареждане на /me, админ маршрути
   notify.js, confirm.js   toast и диалог за потвърждение
   format.js         пари (EUR, bg-BG), дати, „1 кафе / N кафета“
-  components/       WhiteBoard, TallyMarks, DrawingLayer, DrinkOverlay, ConfirmDialog, ToastStack, QuantityStepper
+  components/       WhiteBoard, TallyMarks, DrawingLayer, DrinkOverlay, CoffeePoster, ConfirmDialog, ToastStack, QuantityStepper
   public/           manifest.json, icon.svg и PNG иконите (генерирани от icon.svg)
   components/fx/    SplitText, CountUp, ShinyText, ClickSpark (по React Bits), SteamCup, FloatingBeans
   motion/           index.js (GSAP + Lenis, reducedMotion, isPhone, haptic, dialogIn/Out, shake, pop, afterTick), directives.js (v-reveal, v-magnet,
-                    v-tilt, v-spotlight), burst.js (летящи зърна/чертички), pageTransition.js, useSlidingIndicator.js
+                    v-tilt, v-spotlight), burst.js (летящи зърна/чертички), poster.js (появата на плаката), pageTransition.js, useSlidingIndicator.js
   views/            Login, Home, Account, Drink (QR), admin/{Overview, Users, Packages, Qr, Layout}
-  assets/coffee-face.jpg   лична снимка за „Ти изпи кафе“ – хранилището е private
+  assets/coffee-poster.jpg  плакатът след изпито кафе (без надпис – текстът е в CoffeePoster.vue) – хранилището е private
 frontend/nginx.conf   отделен location за /api/board/events (SSE, без буфериране)
 docker-compose.yml, .env.example
 ```
@@ -98,7 +98,10 @@ Frontend Dockerfile-ът ползва `npm ci`. При добавяне на npm
 - Всеки текст в интерфейса е на български.
 - Дизайн токените са в `styles.css` (`--board`, `--ink`, `--marker`, `--red`, `--font-ui`, `--font-hand` …).
 - Визията е „бяла дъска“: спокоен интерфейс с Onest, а само елементите „написани с маркер“ са с Caveat
-  (баланс, имена и чертички на дъската, надписи под снимката). Не разпространявай Caveat в обикновения UI.
+  (баланс, имена и чертички на дъската). Не разпространявай Caveat в обикновения UI.
+- След изпито кафе излиза плакатът (`CoffeePoster.vue`) с надпис според кое кафе за деня е: 1 – „Да ти е сладко първото кафе!“,
+  2 – „…второто кафе!“, 3+ – „Да ти е сладко, ама много кафе пиеш!“. Надписът е истински текст с Oswald върху
+  картината, а `motion/poster.js` го „отпечатва“ ред по ред. Oswald е само за плаката.
 - Цветовете на маркерите са фиксирани: `#1E4BAF` (син), `#B8372A` (червен), `#2B1F18` (черен). Бекендът ги валидира
   (`DrawingService.COLORS`, плюс `ERASER`).
 - Всяка анимация трябва да уважава `prefers-reduced-motion` (глобалното правило в `styles.css` + `reducedMotion()` от `motion/`).

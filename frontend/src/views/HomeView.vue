@@ -34,8 +34,7 @@ let poller
 let overlayTimer
 
 const drinkOverlay = ref(false)
-const drinkMessage = ref('Ти изпи кафе')
-const drinkWarning = ref(false)
+const drinkCount = ref(1) // кое кафе за днес – избира надписа на плаката
 
 /** Колко кафета си изпил днес – от историята, която се опреснява след всяко кафе. */
 function drinksToday() {
@@ -154,10 +153,7 @@ async function drink() {
 }
 
 function showDrinkOverlay(count) {
-  if (count <= 1) drinkMessage.value = 'Ти изпи кафе'
-  else if (count === 2) drinkMessage.value = 'Ти изпи второ кафе'
-  else drinkMessage.value = 'Много кафета пиеш'
-  drinkWarning.value = count > 2
+  drinkCount.value = count
   drinkOverlay.value = true
   clearTimeout(overlayTimer)
   overlayTimer = setTimeout(hideDrinkOverlay, OVERLAY_MS)
@@ -326,8 +322,7 @@ function historyLeave(el, done) {
 
     <DrinkOverlay
       :show="drinkOverlay"
-      :message="drinkMessage"
-      :warning="drinkWarning"
+      :count="drinkCount"
       @close="hideDrinkOverlay"
     />
   </div>
