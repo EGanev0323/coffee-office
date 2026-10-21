@@ -4,10 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api'
 import { useAuthStore } from '../stores/auth'
 import { coffees } from '../format'
-import photo from '../assets/coffee-face.jpg'
+import CoffeePoster from '../components/CoffeePoster.vue'
+import { posterIntro } from '../motion/poster'
 import SteamCup from '../components/fx/SteamCup.vue'
-import { gsap, reducedMotion, SplitText, afterTick } from '../motion'
-import { burst } from '../motion/burst'
+import { gsap, reducedMotion, afterTick } from '../motion'
 
 /*
   Отваря се от QR кода на кафемашината. Отбелязва кафето веднага при отваряне,
@@ -25,7 +25,7 @@ const router = useRouter()
 
 const state = ref('working') // working | confirm | done | undone | already | error
 const error = ref('')
-const caption = ref({ text: 'Ти изпи кафе', warning: false })
+const todayCount = ref(1) // кое кафе за днес – избира надписа на плаката
 const secondsLeft = ref(UNDO_SECONDS)
 const lastAgo = ref(0)
 const busy = ref(false)
@@ -44,12 +44,6 @@ function drinksToday(activity) {
   return activity.filter(
     (a) => a.type === 'CONSUMPTION' && new Date(a.createdAt).toDateString() === today
   ).length
-}
-
-function captionFor(count) {
-  if (count <= 1) return { text: 'Ти изпи кафе', warning: false }
-  if (count === 2) return { text: 'Ти изпи второ кафе', warning: false }
-  return { text: 'Много кафета пиеш', warning: true }
 }
 
 onMounted(async () => {
@@ -88,13 +82,9 @@ function stageEnter(el, done) {
     gsap.fromTo(el, { y: 20, autoAlpha: 0, scale: 0.97 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)', clearProps: 'all', onComplete: done })
     return
   }
-  const caption = polaroid.querySelector('figcaption')
-  const split = SplitText.create(caption, { type: 'chars', aria: 'auto' })
   gsap
-    .timeline({ onComplete: () => { split.revert(); done() } })
-    .fromTo(polaroid, { y: -180, rotation: -24, scale: 0.6, autoAlpha: 0 }, { y: 0, rotation: -2, scale: 1, autoAlpha: 1, duration: 1, ease: 'elastic.out(1, 0.55)' })
-    .add(() => burst(polaroid, { kind: 'beans', count: 20, power: 1.2 }), 0.3)
-    .from(split.chars, { yPercent: 80, autoAlpha: 0, rotation: () => gsap.utils.random(-25, 25), duration: 0.5, stagger: 0.035, ease: 'back.out(2.2)' }, 0.4)
+    .timeline({ onComplete: done })
+    .add(posterIntro(polaroid, { warning: todayCount.value >= 3 }), 0)
     .from(el.querySelectorAll('.remaining, .undo, .to-board'), { y: 16, autoAlpha: 0, stagger: 0.08, duration: 0.5 }, 0.6)
 }
 function stageLeave(el, done) {
@@ -107,7 +97,7 @@ async function drink() {
   try {
     auth.user = await api('/me/consumptions', { method: 'POST' })
     const activity = await api('/me/activity')
-    caption.value = captionFor(drinksToday(activity))
+    todayCount.value = drinksToday(activity)
     state.value = 'done'
     router.replace({ query: { done: '1' } }) // „Назад“ после няма да отбележи второ кафе
     startCountdown()
@@ -160,11 +150,10 @@ async function undo() {
     </section>
 
     <div v-else-if="state === 'done'" key="done" class="done-stage">
-      <figure v-tilt="{ max: 8 }" class="polaroid">
+      <div v-tilt="{ max: 8 }" class="polaroid">
         <span class="polaroid-pin" aria-hidden="true"></span>
-        <img :src="photo" alt="" width="280" height="280" />
-        <figcaption :class="{ 'is-warning': caption.warning }">{{ caption.text }}</figcaption>
-      </figure>
+        <CoffeePoster :count="todayCount" />
+      </div>
       <p class="remaining" role="status">{{ remaining }}</p>
 
       <div v-if="secondsLeft > 0" class="undo">
@@ -218,43 +207,27 @@ async function undo() {
 .working-stage { gap: 0.5rem; }
 
 .polaroid {
-  margin: 0;
-  background: #FFFFFF;
-  padding: 14px 14px 10px;
-  border-radius: 6px;
-  box-shadow: 0 18px 50px rgba(43, 31, 24, 0.22);
-  transform: rotate(-2deg);
   position: relative;
+  width: min(72vw, 300px, calc((100dvh - var(--tabbar-h) - 16rem) * 0.634));
+  min-width: 180px;
+  padding: 6px;
+  background: #F4ECDD;
+  border-radius: 4px;
+  box-shadow: 0 18px 50px rgba(43, 31, 24, 0.25);
+  transform: rotate(-2deg);
 }
 .polaroid-pin {
   position: absolute;
-  top: -9px;
+  z-index: 2;
+  top: -10px;
   left: 50%;
-  width: 22px;
-  height: 22px;
-  margin-left: -11px;
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #E46A5C, var(--red) 60%, #8A251B);
   box-shadow: 0 3px 6px rgba(43, 31, 24, 0.35);
 }
-.polaroid img {
-  display: block;
-  width: min(280px, 72vw);
-  height: auto;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 2px;
-}
-.polaroid figcaption {
-  font-family: var(--font-hand);
-  font-weight: 700;
-  font-size: 2.2rem;
-  line-height: 1.1;
-  color: var(--marker);
-  margin-top: 0.5rem;
-  max-width: min(280px, 72vw);
-}
-.polaroid figcaption.is-warning { color: var(--red); }
 
 .remaining { font-weight: 500; }
 
