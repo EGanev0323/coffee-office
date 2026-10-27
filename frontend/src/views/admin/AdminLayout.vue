@@ -65,7 +65,9 @@ function onLeave(el, done) {
   flex: none;
   transition: color 0.2s ease;
 }
-.subnav a:hover { color: var(--ink); }
+@media (hover: hover) {
+  .subnav a:hover { color: var(--ink); }
+}
 .subnav a.is-active { color: var(--ink); }
 /* черта с маркер, която се плъзга под активната секция */
 .subnav-line {

@@ -110,7 +110,10 @@ onMounted(load)
       <dl class="facts">
         <div><dt>Продадени кафета</dt><dd><CountUp :value="stats.coffeesSold" :delay="0.15" /></dd></div>
         <div><dt>Изпити кафета</dt><dd><CountUp :value="stats.coffeesConsumed" :delay="0.25" /></dd></div>
-        <div><dt>Предплатени, още неизпити (всички колеги без безкрайните)</dt><dd><CountUp :value="stats.outstandingCoffees" :delay="0.35" /></dd></div>
+        <div>
+          <dt>Предплатени, неизпити <span class="fact-note">всички колеги без безкрайните</span></dt>
+          <dd><CountUp :value="stats.outstandingCoffees" :delay="0.35" /></dd>
+        </div>
       </dl>
     </section>
 
@@ -199,15 +202,32 @@ onMounted(load)
 .collected-sum { font-size: clamp(4rem, 12vw, 6.5rem); }
 .collected-text { font-size: var(--step-1); font-weight: 500; max-width: 24ch; }
 
-.facts { display: flex; flex-wrap: wrap; gap: 0.75rem 2.5rem; margin: 0; }
-.facts div { display: grid; gap: 0.1rem; }
-.facts dt { color: var(--muted); font-size: var(--step--1); }
-.facts dd { margin: 0; font-size: var(--step-1); font-weight: 650; font-variant-numeric: tabular-nums; }
+/* три еднакви плочки – на телефон не се пренасят на различни места */
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin: 0; max-width: 640px; }
+.facts div {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+}
+.facts dt { color: var(--muted); font-size: var(--step--1); line-height: 1.3; }
+.fact-note { display: block; font-size: 0.75rem; opacity: 0.85; }
+.facts dd { margin: 0; font-size: var(--step-2); font-weight: 650; line-height: 1; font-variant-numeric: tabular-nums; }
+@media (max-width: 380px) {
+  .facts { grid-template-columns: 1fr 1fr; }
+  .facts div:last-child { grid-column: 1 / -1; }
+}
 
 .panel h2 + .hint { margin: 0.25rem 0 0.75rem; }
 .balance-cell { font-size: 1.6rem; }
 .month-arrow { transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1), background-color 0.2s ease; }
-.month-arrow:hover:not(:disabled) { transform: scale(1.15); }
+@media (hover: hover) {
+  .month-arrow:hover:not(:disabled) { transform: scale(1.15); }
+}
 
 /* сортиране: редовете се разместват плавно */
 .row-sort-move { transition: transform 0.45s cubic-bezier(0.3, 1.1, 0.4, 1); }

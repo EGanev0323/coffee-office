@@ -56,7 +56,10 @@ function change(delta) {
   cursor: pointer;
   border-radius: 8px;
 }
-.stepper-btn:hover:not(:disabled) { background: rgba(43, 31, 24, 0.05); }
+@media (hover: hover) {
+  .stepper-btn:hover:not(:disabled) { background: rgba(43, 31, 24, 0.05); }
+}
+.stepper-btn:active:not(:disabled) { background: rgba(43, 31, 24, 0.08); }
 .stepper-btn:disabled { color: var(--rule); cursor: not-allowed; }
 @media (max-width: 640px) {
   .stepper-btn { width: 2.75rem; height: 2.75rem; }

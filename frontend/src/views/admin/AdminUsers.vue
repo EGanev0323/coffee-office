@@ -216,12 +216,18 @@ onMounted(load)
 
     <dialog ref="dialog" autofocus @close="onDialogClose">
       <div v-if="editing" class="dialog-body">
+        <!-- главата остава горе, докато листът се скролва – затваря се, без да се слиза до края -->
         <div class="dialog-head">
-          <h2>{{ editing.displayName }}</h2>
-          <p class="hint">
-            {{ editing.username }},
-            {{ editing.unlimited ? 'безкрайни кафета' : `${coffees(editing.balance)} на дъската` }}
-          </p>
+          <div class="dialog-head-text">
+            <h2>{{ editing.displayName }}</h2>
+            <p class="hint">
+              {{ editing.username }},
+              {{ editing.unlimited ? 'безкрайни кафета' : `${coffees(editing.balance)} на дъската` }}
+            </p>
+          </div>
+          <button type="button" class="btn btn-quiet dialog-close" aria-label="Затвори" @click="closeEditor">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
         </div>
 
         <form class="editor-section" @submit.prevent="saveUser">
@@ -293,14 +299,34 @@ onMounted(load)
 .users { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 .panel h2 + .hint { margin: 0.25rem 0 1rem; }
 .create-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
-dialog { width: min(94vw, 520px); }
-.dialog-head { display: grid; gap: 0.2rem; }
+/* на телефон листът е на цялата ширина (правилото в styles.css) */
+@media (min-width: 641px) {
+  dialog { width: min(94vw, 520px); }
+}
+.dialog-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: -0.75rem -1.5rem 0;
+  padding: 0.75rem 0.75rem 0.5rem 1.5rem;
+  background: var(--surface);
+}
+.dialog-head-text { flex: 1 1 auto; min-width: 0; display: grid; gap: 0.2rem; }
+.dialog-close { flex: none; width: 44px; height: 44px; padding: 0; }
+.dialog-close svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .editor-section { display: grid; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
 .editor-section h3 { font-size: var(--step-0); }
 .editor-section .btn-primary { justify-self: start; }
 .tap-row { cursor: pointer; }
 .tap-row:active td { background: var(--board); }
 @media (max-width: 640px) {
+  .dialog-head {
+    margin: -1rem calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter-l));
+    padding: 0.5rem calc(var(--gutter-r) - 0.5rem) 0.5rem var(--gutter-l);
+  }
   .editor-section .btn-primary { justify-self: stretch; }
   .inline > .btn { flex: 1 1 auto; }
   .inline-select, .inline-input { min-height: 48px; }
