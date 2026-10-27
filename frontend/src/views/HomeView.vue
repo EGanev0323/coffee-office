@@ -1,10 +1,10 @@
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { api } from '../api'
 import { useAuthStore } from '../stores/auth'
 import { notify } from '../notify'
 import { confirmAction } from '../confirm'
-import { coffees, dateTime, money } from '../format'
+import { coffees, dayLabel, money, time } from '../format'
 import TallyMarks from '../components/TallyMarks.vue'
 import WhiteBoard from '../components/WhiteBoard.vue'
 import DrinkOverlay from '../components/DrinkOverlay.vue'
@@ -19,6 +19,7 @@ import { afterTick, gsap, haptic, reducedMotion } from '../motion'
 const UNDO_MS = 10 * 60 * 1000
 const REFRESH_MS = 20 * 1000
 const OVERLAY_MS = 3000
+const HISTORY_STEP = 10 // колко реда от историята се показват наведнъж
 
 const auth = useAuthStore()
 const packages = ref([])
@@ -58,8 +59,33 @@ const canUndo = computed(() => {
 const drinkBtn = ref(null)
 const drinkBtnVisible = ref(true)
 const canDrink = computed(() => !loading.value && (unlimited.value || balance.value > 0))
-const showFab = computed(() => canDrink.value && !drinkBtnVisible.value && !drinkOverlay.value)
+const drawing = ref(false) // докато се рисува по дъската, на мястото на бутона е лентата „Готово“
+const showFab = computed(() => canDrink.value && !drinkBtnVisible.value && !drinkOverlay.value && !drawing.value)
 let drinkObserver
+
+// Toast-овете се вдигат над плаващия бутон / лентата за рисуване, за да не ги закриват.
+watch(
+  () => showFab.value || drawing.value,
+  (raised) => document.body.classList.toggle('has-fab', raised),
+  { immediate: true }
+)
+onUnmounted(() => document.body.classList.remove('has-fab'))
+
+/* Историята по дни: първо HISTORY_STEP реда, „Покажи още“ добавя следващите. */
+const historyLimit = ref(HISTORY_STEP)
+const historyRows = computed(() => {
+  const out = []
+  let lastDay = null
+  for (const a of activity.value.slice(0, historyLimit.value)) {
+    const day = new Date(a.createdAt).toDateString()
+    if (day !== lastDay) {
+      out.push({ key: `day-${day}`, day: dayLabel(a.createdAt) })
+      lastDay = day
+    }
+    out.push({ key: a.type + a.id, item: a })
+  }
+  return out
+})
 
 function fabEnter(el, done) {
   if (reducedMotion()) return done()
@@ -220,6 +246,12 @@ function historyLeave(el, done) {
         <TallyMarks :count="0" unlimited />
         <p class="figure"><span class="figure-unit">Имаш безкрайни кафета</span></p>
       </template>
+      <template v-else-if="!auth.user">
+        <p class="figure" aria-hidden="true">
+          <span class="skeleton figure-skeleton"></span>
+        </p>
+        <span class="skeleton tally-skeleton" aria-hidden="true"></span>
+      </template>
       <template v-else>
         <p class="figure">
           <CountUp class="figure-number hand" :value="balance" :duration="1.4" :delay="0.2" />
@@ -275,7 +307,16 @@ function historyLeave(el, done) {
           </div>
         </li>
       </ul>
-      <p v-else-if="!loading && !unlimited" class="hint empty">Все още няма пакети. Администраторът трябва да добави поне един.</p>
+      <ul v-else-if="loading" class="package-list" aria-hidden="true">
+        <li v-for="n in 2" :key="n">
+          <div class="package-info">
+            <span class="skeleton" style="width: 7rem; height: 1.1rem"></span>
+            <span class="skeleton" style="width: 9rem; height: 0.9rem; margin-top: 0.4rem"></span>
+          </div>
+          <span class="skeleton" style="width: 13rem; height: 2.75rem"></span>
+        </li>
+      </ul>
+      <p v-else-if="!unlimited" class="hint empty">Все още няма пакети. Администраторът трябва да добави поне един.</p>
     </section>
 
     <WhiteBoard
@@ -284,6 +325,7 @@ function historyLeave(el, done) {
       :entries="board"
       :current-user-id="auth.user?.id ?? null"
       :loading="loading"
+      @drawing="(on) => (drawing = on)"
     />
 
     <section v-reveal class="history" aria-labelledby="history-title">
@@ -297,14 +339,27 @@ function historyLeave(el, done) {
         @enter="historyEnter"
         @leave="historyLeave"
       >
-        <li v-for="a in activity" :key="a.type + a.id" :class="a.type === 'PURCHASE' ? 'is-purchase' : ''">
-          <span class="activity-when">{{ dateTime(a.createdAt) }}</span>
-          <span class="activity-what">
-            {{ a.type === 'PURCHASE' ? `Купен пакет „${a.label}“${a.quantity > 1 ? ` × ${a.quantity}` : ''} за ${money(a.amount)}` : a.label }}
-          </span>
-          <span class="activity-delta">{{ a.type === 'PURCHASE' ? `+${a.coffees}` : '−1' }}</span>
+        <li
+          v-for="r in historyRows"
+          :key="r.key"
+          :class="r.day ? 'activity-day' : r.item.type === 'PURCHASE' ? 'is-purchase' : ''"
+        >
+          <template v-if="r.day">{{ r.day }}</template>
+          <template v-else>
+            <span class="activity-when">{{ time(r.item.createdAt) }}</span>
+            <span class="activity-what">
+              {{ r.item.type === 'PURCHASE' ? `Купен пакет „${r.item.label}“${r.item.quantity > 1 ? ` × ${r.item.quantity}` : ''} за ${money(r.item.amount)}` : r.item.label }}
+            </span>
+            <span class="activity-delta">{{ r.item.type === 'PURCHASE' ? `+${r.item.coffees}` : '−1' }}</span>
+          </template>
         </li>
       </TransitionGroup>
+      <button
+        v-if="activity.length > historyLimit"
+        type="button"
+        class="btn btn-quiet history-more"
+        @click="historyLimit += HISTORY_STEP"
+      >Покажи още</button>
       <p v-else-if="!loading" class="hint">Тук ще се появят покупките и изпитите ти кафета.</p>
     </section>
     <Teleport to="body">
@@ -332,9 +387,15 @@ function historyLeave(el, done) {
 .home {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-areas:
+    "balance packages"
+    "board board"
+    "history history";
   gap: 1.25rem;
   align-items: start;
 }
+.balance { grid-area: balance; }
+.packages { grid-area: packages; }
 .balance { position: relative; display: grid; gap: 1.1rem; padding: 2rem; overflow: hidden; }
 .balance-cup { position: absolute; top: 1.6rem; right: 1.4rem; }
 .greeting { color: var(--muted); font-weight: 500; }
@@ -373,18 +434,32 @@ function historyLeave(el, done) {
 .package-price { min-width: 5.5rem; font-variant-numeric: tabular-nums; }
 .empty { margin-top: 1rem; }
 
-.board-area { grid-column: 1 / -1; margin-top: 0.75rem; }
-.history { grid-column: 1 / -1; margin-top: 1rem; }
+.board-area { grid-area: board; margin-top: 0.75rem; }
+.history { grid-area: history; margin-top: 1rem; }
+.figure-skeleton { width: 5rem; height: 5rem; border-radius: 12px; }
+.tally-skeleton { width: 12rem; height: 42px; }
 .activity { list-style: none; padding: 0; margin: 0.75rem 0 0; }
 .activity li {
   display: grid;
-  grid-template-columns: 9.5rem 1fr auto;
+  grid-template-columns: 3.5rem 1fr auto;
   gap: 1rem;
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--rule);
   font-size: var(--step--1);
 }
+.activity li.activity-day {
+  display: block;
+  padding: 1rem 0 0.35rem;
+  border-bottom: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.activity li.activity-day:first-child { padding-top: 0.25rem; }
 .activity-when { color: var(--muted); font-variant-numeric: tabular-nums; }
+.history-more { margin-top: 0.5rem; width: 100%; }
 .activity-delta { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
 .is-purchase .activity-delta { color: var(--green); }
 
@@ -440,11 +515,16 @@ function historyLeave(el, done) {
 }
 
 @media (max-width: 760px) {
-  .home { grid-template-columns: 1fr; }
+  /* на телефон дъската е веднага след баланса – пакети се купуват рядко */
+  .home {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "balance" "board" "packages" "history";
+  }
+  .board-area { margin-top: 0; }
   .balance { padding: 1.5rem; }
   .balance-cup { width: 58px; height: 58px; top: 1.2rem; right: 1rem; }
   .btn-drink { width: 100%; min-height: 60px; font-size: 1.25rem; }
-  /* на телефон: какво е станало отгоре, датата по-дребно отдолу, промяната вдясно */
+  /* на телефон: какво е станало отгоре, часът по-дребно отдолу, промяната вдясно */
   .activity li {
     grid-template-columns: 1fr auto;
     grid-template-areas: "what delta" "when delta";

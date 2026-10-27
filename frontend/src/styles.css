@@ -54,6 +54,7 @@ a { color: var(--marker); }
 /* ---------- обща рамка (приложение за телефон) ---------- */
 :root {
   --tabbar-h: 64px;
+  --fab-h: 52px; /* плаващият бутон „Изпих кафе“ и лентата при рисуване */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --gutter-l: max(1rem, env(safe-area-inset-left, 0px));
@@ -194,23 +195,28 @@ a, button, label, input, select, summary, [role="button"] { touch-action: manipu
   white-space: nowrap;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.25s ease, scale 0.15s ease;
 }
-.btn:hover:not(:disabled) { border-color: var(--ink); }
-@media (hover: none) { .btn:hover:not(:disabled) { border-color: var(--rule); } }
 .btn:active:not(:disabled) { scale: 0.96; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-primary { background: var(--marker); border-color: var(--marker); color: #fff; }
-.btn-primary:hover:not(:disabled) {
-  background: #183d90;
-  border-color: #183d90;
-  box-shadow: 0 8px 22px -8px rgba(30, 75, 175, 0.65);
-}
 .btn-danger { color: var(--red); }
-.btn-danger:hover:not(:disabled) { border-color: var(--red); background: var(--red-soft); }
 .btn-danger-fill { background: var(--red); border-color: var(--red); color: #fff; }
-.btn-danger-fill:hover:not(:disabled) { background: #9a2d22; border-color: #9a2d22; }
 .btn-quiet { border-color: transparent; background: transparent; color: var(--muted); }
-.btn-quiet:hover:not(:disabled) { color: var(--ink); border-color: transparent; background: rgba(43, 31, 24, 0.05); }
 .btn-small { padding: 0.35rem 0.7rem; }
+/* hover само с мишка – на телефон ефектът „залепва“ след докосване */
+@media (hover: hover) {
+  .btn:hover:not(:disabled) { border-color: var(--ink); }
+  .btn-primary:hover:not(:disabled) {
+    background: #183d90;
+    border-color: #183d90;
+    box-shadow: 0 8px 22px -8px rgba(30, 75, 175, 0.65);
+  }
+  .btn-danger:hover:not(:disabled) { border-color: var(--red); background: var(--red-soft); }
+  .btn-danger-fill:hover:not(:disabled) { background: #9a2d22; border-color: #9a2d22; }
+  .btn-quiet:hover:not(:disabled) { color: var(--ink); border-color: transparent; background: rgba(43, 31, 24, 0.05); }
+}
+/* на телефон – кратка обратна връзка при докосване вместо hover */
+.btn-quiet:active:not(:disabled) { background: rgba(43, 31, 24, 0.07); }
+.btn-danger:active:not(:disabled) { background: var(--red-soft); }
 
 /* ---------- форми ---------- */
 .field { display: grid; gap: 0.35rem; }
@@ -286,6 +292,8 @@ tr.is-muted td { color: var(--muted); }
   width: min(92vw, 440px);
 }
 .toasts.is-raised { bottom: calc(var(--tabbar-h) + 0.75rem + var(--safe-bottom)); }
+/* над плаващия бутон „Изпих кафе“ (HomeView слага has-fab на body), за да не го закриват */
+body.has-fab .toasts.is-raised { bottom: calc(var(--tabbar-h) + var(--fab-h) + 1.5rem + var(--safe-bottom)); }
 .toast {
   background: var(--ink);
   color: #fff;
@@ -336,6 +344,18 @@ dialog:focus, dialog:focus-visible { outline: none; }
   overflow: hidden;
 }
 .fx-burst-piece { position: absolute; top: 0; left: 0; display: block; will-change: transform; }
+
+/* сиви блокове на мястото на данните, докато се зареждат */
+.skeleton {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #E4E7E5 0%, #EEF0EF 40%, #E4E7E5 80%) 0 0 / 300% 100%;
+  animation: skeleton 1.4s ease-in-out infinite;
+}
+@keyframes skeleton {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
 
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;

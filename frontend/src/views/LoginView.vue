@@ -118,4 +118,12 @@ async function submit() {
 @media (max-width: 720px) {
   .login { grid-template-columns: 1fr; gap: 2rem; min-height: auto; }
 }
+/* телефон: компактна глава (чаша до името), за да е формата в първия екран и над клавиатурата */
+@media (max-width: 640px) {
+  .login { gap: 1.25rem; padding-top: calc(var(--safe-top) + 1rem); }
+  .login-board { grid-template-columns: auto 1fr; align-items: center; gap: 0.75rem; max-width: none; }
+  .login-cup { width: 64px; height: 64px; margin-bottom: 0; }
+  .login-title { font-size: 2.75rem; }
+  .login-board :deep(.tally), .login-board > .hint { display: none; }
+}
 </style>
