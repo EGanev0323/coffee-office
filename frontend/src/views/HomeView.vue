@@ -14,6 +14,7 @@ import CountUp from '../components/fx/CountUp.vue'
 import ShinyText from '../components/fx/ShinyText.vue'
 import SteamCup from '../components/fx/SteamCup.vue'
 import { checkNewBadges } from '../badges'
+import AnnouncementBanner from '../components/AnnouncementBanner.vue'
 import { burst } from '../motion/burst'
 import { afterTick, gsap, haptic, reducedMotion } from '../motion'
 
@@ -36,6 +37,7 @@ let poller
 let overlayTimer
 
 const drinkOverlay = ref(false)
+const noticeVisible = ref(false) // временно съобщение най-горе (announcements.js)
 const drinkCount = ref(1) // кое кафе за днес – избира надписа на плаката
 
 /** Колко кафета си изпил днес – от историята, която се опреснява след всяко кафе. */
@@ -233,7 +235,8 @@ function historyLeave(el, done) {
 </script>
 
 <template>
-  <div class="home">
+  <div class="home" :class="{ 'has-notice': noticeVisible }">
+    <AnnouncementBanner class="notice-area" @visible="noticeVisible = $event" />
     <section v-spotlight class="panel balance" aria-labelledby="balance-title">
       <SteamCup class="balance-cup" :size="76" :delay="0.4" />
       <SplitText
@@ -396,6 +399,14 @@ function historyLeave(el, done) {
   gap: 1.25rem;
   align-items: start;
 }
+.home.has-notice {
+  grid-template-areas:
+    "notice notice"
+    "balance packages"
+    "board board"
+    "history history";
+}
+.notice-area { grid-area: notice; }
 .balance { grid-area: balance; }
 .packages { grid-area: packages; }
 .balance { position: relative; display: grid; gap: 1.1rem; padding: 2rem; overflow: hidden; }
@@ -521,6 +532,9 @@ function historyLeave(el, done) {
   .home {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "balance" "board" "packages" "history";
+  }
+  .home.has-notice {
+    grid-template-areas: "notice" "balance" "board" "packages" "history";
   }
   .board-area { margin-top: 0; }
   .balance { padding: 1.5rem; }
