@@ -15,8 +15,13 @@ RUN --mount=type=cache,target=/root/.m2 \
     echo "Няма връзка с Maven Central. Провери мрежата и пусни билда пак - изтегленото досега се пази."; \
     exit 1
 COPY src ./src
-# Офлайн (-o): тук вече не се тегли нищо, така че мрежата не може да счупи билда.
-RUN --mount=type=cache,target=/root/.m2 mvn -B -q -o package -DskipTests
+# Офлайн (-o): обикновено тук вече не се тегли нищо, така че мрежата не може да счупи билда.
+# Docker обаче може да изчисти кеша /root/.m2, докато стъпката с тегленето по-горе остава „CACHED“ –
+# тогава офлайн билдът няма библиотеки и пада. В този случай ги теглим наново, вместо да спираме.
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -q -o package -DskipTests \
+    || (echo "Библиотеките липсват в кеша – теглят се наново от Maven Central." \
+        && mvn -B -q package -DskipTests)
 
 # ---- run ----
 FROM eclipse-temurin:21-jre-alpine
