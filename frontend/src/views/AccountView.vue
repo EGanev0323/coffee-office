@@ -6,6 +6,7 @@ import { api } from '../api'
 import { useAuthStore } from '../stores/auth'
 import { notify } from '../notify'
 import SplitText from '../components/fx/SplitText.vue'
+import BadgeShelf from '../components/BadgeShelf.vue'
 import { shake } from '../motion'
 import { burst } from '../motion/burst'
 
@@ -60,6 +61,8 @@ async function submit() {
   <div class="account">
     <SplitText tag="h1" text="Профил" :stagger="0.05" />
     <p v-reveal="{ delay: 0.15, y: 10 }" class="hint">{{ auth.user?.displayName }}, потребителско име {{ auth.user?.username }}</p>
+
+    <BadgeShelf />
 
     <form ref="formEl" v-spotlight v-reveal="{ delay: 0.2 }" class="panel stack" @submit.prevent="submit">
       <h2>Смяна на парола</h2>

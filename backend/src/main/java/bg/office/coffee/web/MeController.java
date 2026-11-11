@@ -1,6 +1,7 @@
 package bg.office.coffee.web;
 
 import bg.office.coffee.security.AuthUser;
+import bg.office.coffee.service.BadgeService;
 import bg.office.coffee.service.CoffeeService;
 import bg.office.coffee.service.PackageService;
 import bg.office.coffee.service.UserService;
@@ -19,11 +20,14 @@ public class MeController {
     private final CoffeeService coffeeService;
     private final PackageService packageService;
     private final UserService userService;
+    private final BadgeService badgeService;
 
-    public MeController(CoffeeService coffeeService, PackageService packageService, UserService userService) {
+    public MeController(CoffeeService coffeeService, PackageService packageService, UserService userService,
+                        BadgeService badgeService) {
         this.coffeeService = coffeeService;
         this.packageService = packageService;
         this.userService = userService;
+        this.badgeService = badgeService;
     }
 
     @GetMapping("/me")
@@ -55,6 +59,12 @@ public class MeController {
     @DeleteMapping("/me/consumptions/last")
     public MeDto undo(@AuthenticationPrincipal AuthUser me) {
         return coffeeService.undoLastDrink(me.id());
+    }
+
+    /** Баджовете за изпити кафета и колко остават до следващия. */
+    @GetMapping("/me/badges")
+    public BadgesDto badges(@AuthenticationPrincipal AuthUser me) {
+        return badgeService.forUser(me.id());
     }
 
     @GetMapping("/me/activity")

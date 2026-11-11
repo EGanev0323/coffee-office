@@ -13,6 +13,7 @@ import SplitText from '../components/fx/SplitText.vue'
 import CountUp from '../components/fx/CountUp.vue'
 import ShinyText from '../components/fx/ShinyText.vue'
 import SteamCup from '../components/fx/SteamCup.vue'
+import { checkNewBadges } from '../badges'
 import { burst } from '../motion/burst'
 import { afterTick, gsap, haptic, reducedMotion } from '../motion'
 
@@ -175,6 +176,7 @@ async function drink() {
   if (ok) {
     haptic([18, 60, 18])
     showDrinkOverlay(drinksToday())
+    checkNewBadges(OVERLAY_MS) // нов бадж – след плаката
   }
 }
 

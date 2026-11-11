@@ -5,6 +5,7 @@ import { useAuthStore } from './stores/auth'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import ToastStack from './components/ToastStack.vue'
 import ClickSpark from './components/fx/ClickSpark.vue'
+import BadgeUnlock from './components/BadgeUnlock.vue'
 import { gsap, initSmoothScroll, reducedMotion, ScrollTrigger } from './motion'
 import { pageEnter, pageLeave } from './motion/pageTransition'
 import { useSlidingIndicator } from './motion/useSlidingIndicator'
@@ -123,4 +124,5 @@ onBeforeUnmount(() => {
   <ConfirmDialog />
   <ToastStack :raised="showNav && !typing" />
   <ClickSpark />
+  <BadgeUnlock v-if="showNav" />
 </template>

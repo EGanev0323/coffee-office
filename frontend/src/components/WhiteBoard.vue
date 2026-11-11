@@ -7,6 +7,7 @@ import { api } from '../api'
 import { notify } from '../notify'
 import { confirmAction } from '../confirm'
 import { afterTick, gsap, isPhone, reducedMotion } from '../motion'
+import { badgeImg, badgeTitle } from '../badges'
 
 /*
   Общата дъска в офиса: всеки колега с кафета и неговите чертички.
@@ -57,6 +58,27 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 watch(() => props.entries, sync, { deep: true })
 
+/* Магнитчетата (баджовете) до името – леко накриво, всяко различно, но едно и също при всяко зареждане. */
+function magnetTilt(userId, index) {
+  return `${(((userId * 37 + index * 53) % 17) - 8) * 0.9}deg`
+}
+
+/** Нов бадж: магнитчето „пада“ и щраква върху дъската. */
+function snapMagnets(userId, codes) {
+  if (reducedMotion()) return
+  codes.forEach((code, k) => {
+    const el = frame.value?.querySelector(`[data-magnet="${userId}-${code}"]`)
+    if (!el) return
+    gsap.fromTo(
+      el,
+      { y: -40, scale: 2.2, rotation: -25, autoAlpha: 0 },
+      { y: 0, scale: 1, rotation: 0, autoAlpha: 1, duration: 0.7, delay: k * 0.15, ease: 'back.out(2.4)', clearProps: 'transform,opacity,visibility' }
+    )
+  })
+}
+
+const badgeList = (codes) => codes.map(badgeTitle).join(', ')
+
 function sync(next) {
   const current = new Map(shown.value.map((r) => [r.id, r]))
 
@@ -68,6 +90,9 @@ function sync(next) {
 
     row.displayName = e.displayName
     row.unlimited = e.unlimited
+    const fresh = (e.badges ?? []).filter((code) => !(row.badges ?? []).includes(code))
+    row.badges = e.badges ?? []
+    if (fresh.length) nextTick(() => snapMagnets(row.id, fresh))
     row.target = e.balance
     if (e.unlimited || reduceMotion || e.balance >= row.balance) {
       row.balance = e.balance // покупка или без анимация – веднага
@@ -260,8 +285,25 @@ onUnmounted(() => {
           :class="{ 'is-me': e.id === currentUserId }"
           :style="{ '--row': Math.min(i, 12) }"
         >
-          <span class="board-name">
-            {{ e.displayName }}<span v-if="e.id === currentUserId" class="visually-hidden"> (ти)</span>
+          <span class="board-who">
+            <span class="board-name">
+              {{ e.displayName }}<span v-if="e.id === currentUserId" class="visually-hidden"> (ти)</span>
+            </span>
+            <span v-if="e.badges?.length" class="board-magnets" role="img" :aria-label="`Баджове: ${badgeList(e.badges)}`">
+              <img
+                v-for="(code, k) in e.badges"
+                :key="code"
+                :data-magnet="`${e.id}-${code}`"
+                :src="badgeImg(code)"
+                :title="badgeTitle(code)"
+                :style="{ '--tilt': magnetTilt(e.id, k), '--k': k }"
+                class="board-magnet"
+                alt=""
+                width="30"
+                height="30"
+                draggable="false"
+              />
+            </span>
           </span>
           <TallyMarks :count="e.balance" :max="MAX_VISIBLE" size="sm" :unlimited="e.unlimited" />
           <span class="board-count" :class="{ 'is-zero': !e.unlimited && e.balance === 0 }" aria-hidden="true">
@@ -363,6 +405,41 @@ onUnmounted(() => {
   align-items: center;
   gap: 1rem;
 }
+.board-who {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.55rem;
+  min-width: 0;
+}
+/* баджовете като кръгли магнитчета, закачени до името */
+.board-magnets { display: inline-flex; align-items: center; padding-left: 2px; }
+.board-magnet {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-left: -7px;
+  rotate: var(--tilt, 0deg);
+  box-shadow:
+    0 2px 2px rgba(43, 31, 24, 0.28),
+    0 5px 8px -3px rgba(43, 31, 24, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  background: #1d1d26;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.board-magnet:first-child { margin-left: 0; }
+.board-row-enter-active .board-magnet {
+  transition: opacity 0.3s ease-out, transform 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+  transition-delay: calc(var(--row, 0) * 70ms + 400ms + var(--k, 0) * 80ms);
+}
+.board-row-enter-from .board-magnet { opacity: 0; transform: translateY(-10px) scale(1.4); }
+@media (hover: hover) {
+  .board-magnet { transition: scale 0.25s cubic-bezier(0.3, 1.6, 0.5, 1); }
+  .board-magnet:hover { scale: 1.6; z-index: 2; position: relative; }
+}
+
 .board-name {
   justify-self: start;
   font-family: var(--font-hand);
@@ -522,6 +599,7 @@ onUnmounted(() => {
   .board { padding: 1rem 1.1rem 1.25rem; }
   .board-tray { margin: 0 0.75rem; --marker-w: 48px; --marker-gap: 56px; }
   .board-row { grid-template-columns: 1fr auto; row-gap: 0.2rem; }
+  .board-magnet { width: 26px; height: 26px; margin-left: -6px; }
   .board-row :deep(.tally) { grid-column: 1 / -1; grid-row: 2; }
 }
 </style>
