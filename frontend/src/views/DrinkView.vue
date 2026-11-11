@@ -5,6 +5,7 @@ import { api } from '../api'
 import { useAuthStore } from '../stores/auth'
 import { coffees } from '../format'
 import CoffeePoster from '../components/CoffeePoster.vue'
+import { checkNewBadges } from '../badges'
 import { posterIntro } from '../motion/poster'
 import SteamCup from '../components/fx/SteamCup.vue'
 import { gsap, reducedMotion, afterTick } from '../motion'
@@ -101,6 +102,7 @@ async function drink() {
     state.value = 'done'
     router.replace({ query: { done: '1' } }) // „Назад“ после няма да отбележи второ кафе
     startCountdown()
+    checkNewBadges(2600) // нов бадж – след като плакатът се отпечата
   } catch (e) {
     error.value = e.message
     state.value = 'error'

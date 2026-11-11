@@ -1,6 +1,7 @@
 package bg.office.coffee.repo;
 
 import bg.office.coffee.domain.Consumption;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,4 +22,13 @@ public interface ConsumptionRepository extends JpaRepository<Consumption, Long> 
     @Query("select c.user.id, count(c) from Consumption c " +
            "where c.createdAt >= :from and c.createdAt < :to group by c.user.id")
     List<Object[]> countsPerUser(@Param("from") Instant from, @Param("to") Instant to);
+
+    long countByUser_Id(Long userId);
+
+    /** Изпитите кафета на колегата от най-старото – с Pageable се взима N-тото (за датата на бадж). */
+    List<Consumption> findByUser_IdOrderByCreatedAtAscIdAsc(Long userId, Pageable pageable);
+
+    /** Редове: [userId, брой изпити кафета общо] – за баджовете на дъската. */
+    @Query("select c.user.id, count(c) from Consumption c group by c.user.id")
+    List<Object[]> totalsPerUser();
 }

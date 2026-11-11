@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /** Покупки на пакети, изпити кафета и история на колегата. */
@@ -33,13 +34,16 @@ public class CoffeeService {
     private final CoffeePackageRepository packages;
     private final PurchaseRepository purchases;
     private final ConsumptionRepository consumptions;
+    private final BadgeService badges;
 
     public CoffeeService(AppUserRepository users, CoffeePackageRepository packages,
-                         PurchaseRepository purchases, ConsumptionRepository consumptions) {
+                         PurchaseRepository purchases, ConsumptionRepository consumptions,
+                         BadgeService badges) {
         this.users = users;
         this.packages = packages;
         this.purchases = purchases;
         this.consumptions = consumptions;
+        this.badges = badges;
     }
 
     @Transactional(readOnly = true)
@@ -140,11 +144,13 @@ public class CoffeeService {
                 .toList();
     }
 
-    /** Общата дъска: кой колко кафета има в момента. */
+    /** Общата дъска: кой колко кафета има в момента и какви баджове е събрал. */
     @Transactional(readOnly = true)
     public List<BoardEntryDto> board() {
+        Map<Long, List<String>> earned = badges.earnedPerUser();
         return users.findBoard().stream()
-                .map(u -> new BoardEntryDto(u.getId(), u.getDisplayName(), u.getBalance(), u.isUnlimited()))
+                .map(u -> new BoardEntryDto(u.getId(), u.getDisplayName(), u.getBalance(), u.isUnlimited(),
+                        earned.getOrDefault(u.getId(), List.of())))
                 .toList();
     }
 

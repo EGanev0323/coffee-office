@@ -20,9 +20,9 @@
 backend/src/main/java/bg/office/coffee/
   config/      SecurityConfig, AdminSeeder (създава първия админ от env)
   security/    JwtService, JwtAuthFilter, AuthUser, TokenClaims
-  domain/      AppUser, CoffeePackage, Purchase, Consumption, BoardStroke, Role
+  domain/      AppUser, CoffeePackage, Purchase, Consumption, BoardStroke, Role, Badge (баджове – праговете)
   repo/        Spring Data репозиторита
-  service/     CoffeeService, StatsService, UserService, PackageService, DrawingService, BoardEvents (SSE)
+  service/     CoffeeService, StatsService, UserService, PackageService, DrawingService, BadgeService, BoardEvents (SSE)
   web/         контролери (Auth, Me, Admin, Board), dto/ (records), ApiExceptionHandler
 backend/src/main/resources/
   application.yml
@@ -34,12 +34,15 @@ frontend/src/
   router.js         guard: вход, зареждане на /me, админ маршрути
   notify.js, confirm.js   toast и диалог за потвърждение
   format.js         пари (EUR, bg-BG), дати, „1 кафе / N кафета“
-  components/       WhiteBoard, TallyMarks, DrawingLayer, DrinkOverlay, CoffeePoster, ConfirmDialog, ToastStack, QuantityStepper
+  components/       WhiteBoard, TallyMarks, DrawingLayer, DrinkOverlay, CoffeePoster, BadgeShelf, BadgeUnlock,
+                    ConfirmDialog, ToastStack, QuantityStepper
+  badges.js         баджовете: картинки, заглавия, проверка за нов бадж след кафе
   public/           manifest.json, icon.svg и PNG иконите (генерирани от icon.svg)
   components/fx/    SplitText, CountUp, ShinyText, ClickSpark (по React Bits), SteamCup, FloatingBeans
   motion/           index.js (GSAP + Lenis, reducedMotion, isPhone, haptic, dialogIn/Out, shake, pop, afterTick), directives.js (v-reveal, v-magnet,
                     v-tilt, v-spotlight), burst.js (летящи зърна/чертички), poster.js (появата на плаката), pageTransition.js, useSlidingIndicator.js
   views/            Login, Home, Account, Drink (QR), admin/{Overview, Users, Packages, Qr, Layout}
+  assets/badges/    кръглите магнитчета на баджовете (cups-50.webp … cups-1000.webp)
   assets/coffee-poster.jpg  плакатът след изпито кафе (без надпис – текстът е в CoffeePoster.vue) – хранилището е private
 frontend/nginx.conf   отделен location за /api/board/events (SSE, без буфериране)
 docker-compose.yml, .env.example
@@ -142,6 +145,12 @@ Frontend Dockerfile-ът ползва `npm ci`. При добавяне на npm
 - **Безкрайни кафета (`unlimited`):** балансът не намалява, пакети не се купуват, на дъската стои ∞,
   не се брои в „предплатени“.
 - **Дъската** показва всички активни колеги с `board_visible = true`, включително тези с 0 кафета (червена 0).
+- **Баджове:** 50 / 100 / 500 / 1000 изпити кафета общо (`domain/Badge`). Не се пазят в базата – смятат се от броя редове
+  в `consumption`, така че старата история се зачита, а отменено кафе връща и баджа назад. Датата на получаване е
+  датата на N-тото кафе. `/api/board` носи кодовете (`badges`) – на дъската са кръгли магнитчета до името;
+  `/api/me/badges` дава колекцията и колко остават до следващия (профилът). Нов бадж = прагът е точно колкото
+  са изпитите кафета след последното – тогава след плаката излиза `BadgeUnlock`. Нов бадж се добавя в enum-а
+  `Badge`, в `badges.js` и с картинка в `assets/badges/`.
 - **Гъбата на дъската** трие чертичките една по една, когато балансът намалее (най-много 5 с анимация наведнъж).
 
 ## Сигурност и данни
