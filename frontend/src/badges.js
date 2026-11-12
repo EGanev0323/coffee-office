@@ -9,15 +9,17 @@ import cups100 from './assets/badges/cups-100.webp'
 import cups500 from './assets/badges/cups-500.webp'
 import cups1000 from './assets/badges/cups-1000.webp'
 
+// title – името на баджа, quote – репликата под него (в профила и при отключване)
 export const BADGES = {
-  CUPS_50: { img: cups50, title: '50 кафета', tier: 'Бронз' },
-  CUPS_100: { img: cups100, title: '100 кафета', tier: 'Сребро' },
-  CUPS_500: { img: cups500, title: '500 кафета', tier: 'Злато' },
-  CUPS_1000: { img: cups1000, title: '1000 кафета', tier: 'Космос' }
+  CUPS_50: { img: cups50, threshold: 50, title: 'Кафе ценител', quote: 'Официално си в клуба на истинските кафе ценители!' },
+  CUPS_100: { img: cups100, threshold: 100, title: 'Кафе познавач', quote: 'Кафето те познава по име!' },
+  CUPS_500: { img: cups500, threshold: 500, title: 'Кафе майстор', quote: 'Кафе машината ще започне сама да ти пуска кафето!' },
+  CUPS_1000: { img: cups1000, threshold: 1000, title: 'Кафе легенда', quote: 'Това не е просто любов към кафето. Това е начин на живот!' }
 }
 
 export const badgeImg = (code) => BADGES[code]?.img
 export const badgeTitle = (code) => BADGES[code]?.title ?? code
+export const badgeQuote = (code) => BADGES[code]?.quote ?? ''
 
 /*
   Отключване на нов бадж: след „Изпих кафе“ страницата вика checkNewBadges(),

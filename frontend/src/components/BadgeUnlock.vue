@@ -86,7 +86,8 @@ function onLeave(el, done) {
         <div class="unlock-text">
           <p class="unlock-kicker">Нов бадж!</p>
           <p class="unlock-title">{{ BADGES[code].title }}</p>
-          <p class="unlock-hint">Магнитчето вече е на дъската до името ти.</p>
+          <p class="unlock-quote">„{{ BADGES[code].quote }}“</p>
+          <p class="unlock-hint">{{ BADGES[code].threshold }} изпити кафета · магнитчето вече е на дъската до името ти.</p>
           <button type="button" class="btn unlock-btn" @click.stop="openProfile">Виж баджовете</button>
         </div>
       </div>
@@ -141,6 +142,7 @@ function onLeave(el, done) {
   color: #F2CF7A;
 }
 .unlock-title { font-family: var(--font-hand); font-weight: 700; font-size: 2.6rem; line-height: 1; }
+.unlock-quote { font-size: var(--step-0); font-style: italic; max-width: 28ch; line-height: 1.4; }
 .unlock-hint { color: rgba(255, 255, 255, 0.72); font-size: var(--step--1); max-width: 26ch; }
 .unlock-btn {
   margin-top: 0.75rem;

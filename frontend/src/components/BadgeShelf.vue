@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue'
 import CountUp from './fx/CountUp.vue'
-import { badgeImg, loadBadges } from '../badges'
+import { badgeImg, badgeQuote, badgeTitle, loadBadges } from '../badges'
 import { coffees, dayLabel } from '../format'
 import { gsap, reducedMotion } from '../motion'
 
@@ -65,7 +65,7 @@ function animateIn() {
             Изпи общо <strong><CountUp :value="data.coffees" :duration="1.2" /></strong>&nbsp;{{ data.coffees === 1 ? 'кафе' : 'кафета' }}
           </p>
           <p v-if="next" class="next-left">
-            Още <strong>{{ coffees(data.remaining) }}</strong> до бадж „{{ next.title }}“
+            Още <strong>{{ coffees(data.remaining) }}</strong> до „{{ badgeTitle(next.code) }}“
           </p>
           <p v-else class="next-left">Събра всички баджове. Пълна колекция!</p>
           <div
@@ -94,9 +94,11 @@ function animateIn() {
               <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
             </svg>
           </span>
-          <span class="badge-title">{{ b.title }}</span>
+          <span class="badge-title">{{ badgeTitle(b.code) }}</span>
+          <span class="badge-threshold">{{ b.threshold }} кафета</span>
+          <span v-if="b.earnedAt" class="badge-quote">„{{ badgeQuote(b.code) }}“</span>
           <span class="badge-meta">
-            {{ b.earnedAt ? `получен ${dayLabel(b.earnedAt).toLowerCase()}` : `на ${b.threshold} изпити кафета` }}
+            {{ b.earnedAt ? `получен ${dayLabel(b.earnedAt).toLowerCase()}` : 'още заключен' }}
           </span>
         </li>
       </ul>
@@ -126,7 +128,7 @@ function animateIn() {
 }
 .next-text { flex: 1; min-width: 0; display: grid; gap: 0.3rem; }
 .next-total, .next-left { margin: 0; }
-.next-total strong { font-family: var(--font-hand); font-size: 1.6rem; color: var(--marker); line-height: 1; }
+.next-total strong { font-family: var(--font-hand); font-size: 1.6rem; color: var(--marker); line-height: 1; margin-right: 0.15em; }
 .next-left { color: var(--muted); font-size: var(--step--1); }
 .next-left strong { color: var(--ink); }
 
@@ -203,7 +205,21 @@ function animateIn() {
   stroke-width: 2;
   stroke-linecap: round;
 }
-.badge-title { font-weight: 650; font-size: var(--step--1); }
+.badge-title { font-weight: 700; font-size: var(--step--1); }
+.badge-threshold {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.badge-quote {
+  margin: 0.2rem 0 0.1rem;
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--ink);
+}
 .badge-meta { color: var(--muted); font-size: 0.75rem; line-height: 1.3; }
 .badge-card:not(.is-earned) .badge-title { color: var(--muted); }
 
