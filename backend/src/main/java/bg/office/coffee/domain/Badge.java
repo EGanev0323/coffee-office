@@ -11,10 +11,10 @@ import java.util.Optional;
  */
 public enum Badge {
 
-    CUPS_50(50, "50 кафета"),
-    CUPS_100(100, "100 кафета"),
-    CUPS_500(500, "500 кафета"),
-    CUPS_1000(1000, "1000 кафета");
+    CUPS_50(50, "Кафе ценител"),
+    CUPS_100(100, "Кафе познавач"),
+    CUPS_500(500, "Кафе майстор"),
+    CUPS_1000(1000, "Кафе легенда");
 
     private final int threshold;
     private final String title;

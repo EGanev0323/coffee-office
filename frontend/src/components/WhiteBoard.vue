@@ -6,7 +6,7 @@ import SplitText from './fx/SplitText.vue'
 import { api } from '../api'
 import { notify } from '../notify'
 import { confirmAction } from '../confirm'
-import { afterTick, gsap, isPhone, reducedMotion } from '../motion'
+import { afterTick, gsap, haptic, isPhone, reducedMotion } from '../motion'
 import { badgeImg, badgeTitle } from '../badges'
 
 /*
@@ -78,6 +78,41 @@ function snapMagnets(userId, codes) {
 }
 
 const badgeList = (codes) => codes.map(badgeTitle).join(', ')
+
+/*
+  Името на баджа над магнитчето: при задържане (или докосване) на телефон и при посочване с мишка.
+  Едно балонче за цялата дъска, позиционирано спрямо рамката.
+*/
+const magnetTip = ref(null) // { text, x, y }
+const HOLD_MS = 350
+let holdTimer
+let hideTimer
+
+function showMagnetTip(el, code) {
+  const box = frame.value?.getBoundingClientRect()
+  const r = el.getBoundingClientRect()
+  if (!box) return
+  clearTimeout(hideTimer)
+  magnetTip.value = { text: badgeTitle(code), x: r.left + r.width / 2 - box.left, y: r.top - box.top }
+}
+function hideMagnetTip(delay = 0) {
+  clearTimeout(holdTimer)
+  clearTimeout(hideTimer)
+  if (delay) hideTimer = setTimeout(() => { magnetTip.value = null }, delay)
+  else magnetTip.value = null
+}
+function onMagnetDown(e, code) {
+  if (e.pointerType === 'mouse') return
+  const el = e.currentTarget
+  clearTimeout(holdTimer)
+  holdTimer = setTimeout(() => { showMagnetTip(el, code); haptic(12) }, HOLD_MS)
+}
+function onMagnetUp(e, code) {
+  if (e.pointerType === 'mouse') return
+  clearTimeout(holdTimer)
+  showMagnetTip(e.currentTarget, code) // и кратко докосване показва името
+  hideMagnetTip(1800)
+}
 
 function sync(next) {
   const current = new Map(shown.value.map((r) => [r.id, r]))
@@ -255,6 +290,8 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  clearTimeout(holdTimer)
+  clearTimeout(hideTimer)
   alive = false
   resizeObserver?.disconnect()
   window.removeEventListener('keydown', onKey)
@@ -264,7 +301,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section ref="frame" class="board-frame" aria-labelledby="board-title">
+  <section ref="frame" class="board-frame" aria-labelledby="board-title" @scroll.passive="hideMagnetTip()">
+    <Transition name="magnet-tip">
+      <span
+        v-if="magnetTip"
+        class="magnet-tip"
+        :style="{ left: `${magnetTip.x}px`, top: `${magnetTip.y}px` }"
+        aria-hidden="true"
+      >{{ magnetTip.text }}</span>
+    </Transition>
     <div ref="boardEl" class="board">
       <DrawingLayer ref="drawing" :color="drawColor" @clearing="sweep" />
       <SplitText
@@ -295,9 +340,14 @@ onUnmounted(() => {
                 :key="code"
                 :data-magnet="`${e.id}-${code}`"
                 :src="badgeImg(code)"
-                :title="badgeTitle(code)"
                 :style="{ '--tilt': magnetTilt(e.id, k), '--k': k }"
                 class="board-magnet"
+                @pointerdown="onMagnetDown($event, code)"
+                @pointerup="onMagnetUp($event, code)"
+                @pointercancel="hideMagnetTip()"
+                @mouseenter="showMagnetTip($event.currentTarget, code)"
+                @mouseleave="hideMagnetTip()"
+                @contextmenu.prevent"
                 alt=""
                 width="30"
                 height="30"
@@ -428,7 +478,42 @@ onUnmounted(() => {
   background: #1d1d26;
   user-select: none;
   -webkit-user-drag: none;
+  -webkit-touch-callout: none; /* без менюто „Запази снимката“ при задържане */
+  touch-action: manipulation;
 }
+
+/* балончето с името на баджа */
+.magnet-tip {
+  position: absolute;
+  z-index: 6;
+  translate: -50% calc(-100% - 10px);
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 6px 16px -6px rgba(43, 31, 24, 0.6);
+}
+.magnet-tip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background: inherit;
+  rotate: 45deg;
+  border-radius: 2px;
+}
+.magnet-tip-enter-active { transition: opacity 0.15s ease, scale 0.2s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.magnet-tip-leave-active { transition: opacity 0.15s ease; }
+.magnet-tip-enter-from { opacity: 0; scale: 0.8; }
+.magnet-tip-leave-to { opacity: 0; }
 .board-magnet:first-child { margin-left: 0; }
 .board-row-enter-active .board-magnet {
   transition: opacity 0.3s ease-out, transform 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
