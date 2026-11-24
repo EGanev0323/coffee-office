@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { installMotionDirectives } from './motion/directives'
+import { initTheme } from './theme'
 import '@fontsource/onest/400.css'
 import '@fontsource/onest/500.css'
 import '@fontsource/onest/600.css'
@@ -12,6 +13,7 @@ import '@fontsource/oswald/600.css' // надписът на плаката за
 import '@fontsource/oswald/700.css'
 import './styles.css'
 
+initTheme()
 const app = createApp(App).use(createPinia()).use(router)
 installMotionDirectives(app)
 app.mount('#app')
