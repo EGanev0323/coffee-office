@@ -43,7 +43,11 @@ export function initSmoothScroll() {
   lenis = new Lenis({
     autoRaf: false,
     lerp: 0.11,
-    // в диалози и елементи със собствено скролване (широки таблици) колелцето остава нативно
+    // таблици и ленти със собствен скрол: колелцето ги мести, докато могат,
+    // а иначе (напр. вертикално върху широка таблица) скролва страницата
+    allowNestedScroll: true,
+    // в диалозите колелцето остава изцяло нативно; data-lenis-prevent е само за панели,
+    // които наистина трябва да „държат“ скрола (lenis.css им слага overscroll-behavior: contain)
     prevent: (node) => !!node.closest?.('dialog, [data-lenis-prevent]')
   })
   lenis.on('scroll', ScrollTrigger.update)
