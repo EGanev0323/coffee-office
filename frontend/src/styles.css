@@ -243,7 +243,10 @@ a, button, label, input, select, summary, [role="button"] { touch-action: manipu
 .form-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); align-items: end; }
 
 /* ---------- таблици ---------- */
-.table-wrap { overflow-x: auto; position: relative; } /* relative: скритите заглавия да не разтягат страницата */
+/* relative: скритите заглавия да не разтягат страницата.
+   overflow-y: hidden – таблицата се плъзга само настрани. Иначе редовете, които още „влизат“ с анимация
+   (транслирани надолу), я правят скролируема и вертикално и тя „гълта“ пръста/колелцето вместо страницата. */
+.table-wrap { overflow-x: auto; overflow-y: hidden; position: relative; }
 table { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
 th {
   text-align: left;

@@ -120,7 +120,7 @@ onMounted(load)
     <section v-if="stats" v-spotlight v-reveal="{ delay: 0.1 }" class="panel">
       <h2>Кой колко кафета има</h2>
       <p class="hint">„Налични“ е текущият баланс. Останалите колони са само за {{ label }}.</p>
-      <div class="table-wrap" data-lenis-prevent>
+      <div class="table-wrap">
         <table class="ptable">
           <thead>
             <tr>
@@ -156,7 +156,7 @@ onMounted(load)
     <section v-spotlight v-reveal="{ delay: 0.15 }" class="panel">
       <h2>Покупки през месеца</h2>
       <p class="hint">Изтрий покупка, ако е въведена по грешка или парите не са платени.</p>
-      <div class="table-wrap" data-lenis-prevent>
+      <div class="table-wrap">
         <table class="ptable">
           <thead>
             <tr>

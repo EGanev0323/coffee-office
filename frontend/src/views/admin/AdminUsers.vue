@@ -141,7 +141,7 @@ onMounted(load)
     <section v-spotlight v-reveal class="panel">
       <h2>Колеги</h2>
       <p class="hint only-phone">Натисни колега, за да промениш данните му или да запишеш плащане.</p>
-      <div class="table-wrap" data-lenis-prevent>
+      <div class="table-wrap">
         <table class="ptable">
           <thead>
             <tr>

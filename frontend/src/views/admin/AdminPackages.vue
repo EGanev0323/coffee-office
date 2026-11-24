@@ -90,7 +90,7 @@ onMounted(load)
         </div>
         <button type="button" class="btn btn-primary btn-block-phone" @click="openEditor()">Нов пакет</button>
       </div>
-      <div class="table-wrap" data-lenis-prevent>
+      <div class="table-wrap">
         <table class="ptable">
           <thead>
             <tr>

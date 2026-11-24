@@ -26,7 +26,7 @@ function onLeave(el, done) {
 
 <template>
   <div class="admin">
-    <nav ref="nav" class="subnav" aria-label="Админ секции" data-lenis-prevent>
+    <nav ref="nav" class="subnav" aria-label="Админ секции">
       <RouterLink :to="{ name: 'admin' }" exact-active-class="is-active" active-class="">Месечен отчет</RouterLink>
       <RouterLink :to="{ name: 'admin-users' }">Колеги</RouterLink>
       <RouterLink :to="{ name: 'admin-packages' }">Пакети</RouterLink>
@@ -47,9 +47,12 @@ function onLeave(el, done) {
   position: relative;
   display: flex;
   gap: 1.5rem;
-  border-bottom: 1px solid var(--rule);
+  /* чертата е сянка, не border: линковете не трябва да излизат извън лентата, иначе тя става
+     скролируема и вертикално (с 1 px) и „гълта“ колелцето/пръста, вместо да скролва страницата */
+  box-shadow: inset 0 -1px 0 var(--rule);
   /* на тесен екран секциите се плъзгат настрани, вместо да се пренасят */
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -60,7 +63,6 @@ function onLeave(el, done) {
   font-weight: 600;
   font-size: var(--step--1);
   padding: 0.75rem 0;
-  margin-bottom: -1px;
   white-space: nowrap;
   flex: none;
   transition: color 0.2s ease;
@@ -78,6 +80,5 @@ function onLeave(el, done) {
   opacity: 0;
   border-bottom: 3px solid var(--marker);
   border-radius: 0 0 2px 2px;
-  margin-bottom: -1px;
 }
 </style>
