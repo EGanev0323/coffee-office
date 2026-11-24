@@ -5,6 +5,8 @@ import { notify } from '../../notify'
 import { useAuthStore } from '../../stores/auth'
 import { coffees, money } from '../../format'
 import QuantityStepper from '../../components/QuantityStepper.vue'
+import MarkerAvatar from '../../components/MarkerAvatar.vue'
+import { markerClass } from '../../markers'
 import { dialogIn, dialogOut, lockScroll } from '../../motion'
 
 const auth = useAuthStore()
@@ -157,19 +159,24 @@ onMounted(load)
               v-for="(u, i) in users"
               :key="u.id"
               class="tap-row"
-              :class="{ 'is-muted': !u.active }"
+              :class="[markerClass(u.id), { 'is-muted': !u.active }]"
               :style="{ '--i': Math.min(i, 15) }"
               @click="openEditor(u)"
             >
               <td>
-                {{ u.displayName }}
-                <span v-if="!u.active" class="badge badge-off">неактивен</span>
-                <span v-else-if="!u.boardVisible" class="badge">скрит от дъската</span>
-                <span class="row-meta">{{ u.username }} · {{ u.role === 'ADMIN' ? 'администратор' : 'колега' }}</span>
+                <span class="cell-person">
+                  <MarkerAvatar :name="u.displayName" :user-id="u.id" size="sm" :ring="!u.active" />
+                  <span>
+                    {{ u.displayName }}
+                    <span v-if="!u.active" class="badge badge-off">неактивен</span>
+                    <span v-else-if="!u.boardVisible" class="badge badge-note">скрит от дъската</span>
+                    <span class="row-meta">{{ u.username }} · {{ u.role === 'ADMIN' ? 'администратор' : 'колега' }}</span>
+                  </span>
+                </span>
               </td>
               <td class="col-extra">{{ u.username }}</td>
               <td class="col-extra">{{ u.role === 'ADMIN' ? 'Администратор' : 'Колега' }}</td>
-              <td class="num">{{ u.unlimited ? '∞+1' : u.balance }}</td>
+              <td class="num"><span class="balance-cell">{{ u.unlimited ? '∞+1' : u.balance }}</span></td>
               <td class="num">
                 <button class="btn btn-small manage-btn" :aria-label="`Управлявай ${u.displayName}`" @click.stop="openEditor(u)">
                   <span class="hide-phone">Управлявай</span>

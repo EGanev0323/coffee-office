@@ -13,6 +13,7 @@ import SplitText from '../components/fx/SplitText.vue'
 import CountUp from '../components/fx/CountUp.vue'
 import ShinyText from '../components/fx/ShinyText.vue'
 import SteamCup from '../components/fx/SteamCup.vue'
+import AppIcon from '../components/AppIcon.vue'
 import { checkNewBadges } from '../badges'
 import AnnouncementBanner from '../components/AnnouncementBanner.vue'
 import { burst } from '../motion/burst'
@@ -237,90 +238,93 @@ function historyLeave(el, done) {
 <template>
   <div class="home" :class="{ 'has-notice': noticeVisible }">
     <AnnouncementBanner class="notice-area" @visible="noticeVisible = $event" />
-    <section v-spotlight class="panel balance" aria-labelledby="balance-title">
+    <section v-spotlight class="board hero" aria-labelledby="balance-title">
       <SteamCup class="balance-cup" :size="76" :delay="0.4" />
-      <SplitText
-        id="balance-title"
-        class="greeting"
-        split="words"
-        :text="`Здравей, ${auth.user?.displayName ?? ''}`"
-        :stagger="0.08"
-        :delay="0.15"
-      />
-      <template v-if="unlimited">
-        <TallyMarks :count="0" unlimited />
-        <p class="figure"><span class="figure-unit">Имаш безкрайни кафета</span></p>
-      </template>
-      <template v-else-if="!auth.user">
-        <p class="figure" aria-hidden="true">
-          <span class="skeleton figure-skeleton"></span>
-        </p>
-        <span class="skeleton tally-skeleton" aria-hidden="true"></span>
-      </template>
-      <template v-else>
-        <p class="figure">
-          <CountUp class="figure-number hand" :value="balance" :duration="1.4" :delay="0.2" />
-          <span class="figure-unit">{{ balance === 1 ? 'кафе' : 'кафета' }} на дъската</span>
-        </p>
-        <TallyMarks :count="balance" />
-      </template>
-      <p v-if="!loading && !unlimited && balance === 0" class="hint">
-        Нямаш налични кафета. Купи пакет, за да отбелязваш изпитите.
-      </p>
-      <div class="balance-actions">
-        <button
-          v-magnet="{ strength: 0.25, padding: 28 }"
-          ref="drinkBtn"
-          class="btn btn-primary btn-drink"
-          :disabled="busy || (!unlimited && balance === 0)"
-          @click="drink"
-        >
-          <ShinyText base="#D9E3FA" :disabled="busy || (!unlimited && balance === 0)">Изпих кафе</ShinyText>
-        </button>
-        <Transition name="undo-pop">
-          <button v-if="canUndo" class="btn btn-quiet" :disabled="busy" @click="undo">
-            Отмени последното
-          </button>
-        </Transition>
+      <div class="balance">
+        <div class="balance-main">
+          <SplitText
+            id="balance-title"
+            class="greeting"
+            split="words"
+            :text="`Здравей, ${auth.user?.displayName ?? ''}`"
+            :stagger="0.08"
+            :delay="0.15"
+          />
+          <template v-if="unlimited">
+            <p class="figure"><span class="figure-unit">Имаш безкрайни кафета</span></p>
+            <TallyMarks :count="0" unlimited />
+          </template>
+          <template v-else-if="!auth.user">
+            <p class="figure" aria-hidden="true">
+              <span class="skeleton figure-skeleton"></span>
+            </p>
+            <span class="skeleton tally-skeleton" aria-hidden="true"></span>
+          </template>
+          <template v-else>
+            <p class="figure">
+              <CountUp class="figure-number" :value="balance" :duration="1.4" :delay="0.2" />
+              <span class="figure-unit">{{ balance === 1 ? 'кафе' : 'кафета' }} на дъската</span>
+            </p>
+            <TallyMarks :count="balance" />
+          </template>
+          <p v-if="!loading && !unlimited && balance === 0" class="hint">
+            Нямаш налични кафета. Купи пакет, за да отбелязваш изпитите.
+          </p>
+          <div class="balance-actions">
+            <button
+              v-magnet="{ strength: 0.25, padding: 28 }"
+              ref="drinkBtn"
+              class="btn-drink"
+              :disabled="busy || (!unlimited && balance === 0)"
+              @click="drink"
+            >
+              <span class="magnet magnet-lg m-red" aria-hidden="true"></span>
+              <ShinyText base="#D9E3FA" :disabled="busy || (!unlimited && balance === 0)">Изпих кафе</ShinyText>
+            </button>
+            <Transition name="undo-pop">
+              <button v-if="canUndo" class="btn btn-quiet" :disabled="busy" @click="undo">
+                <AppIcon name="undo" />Отмени последното
+              </button>
+            </Transition>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section v-spotlight v-reveal="{ delay: 0.12, y: 36 }" class="panel packages" aria-labelledby="packages-title">
+    <section v-reveal="{ delay: 0.12, y: 36 }" class="packages" aria-labelledby="packages-title">
       <h2 id="packages-title">Зареди кафета</h2>
       <p v-if="unlimited" class="hint">
         Не е нужно да купуваш пакети. Отбелязвай изпитите кафета, за да се виждат в статистиката.
       </p>
       <p v-else class="hint">Плащаш предварително и кафетата се добавят към твоята дъска.</p>
-      <ul v-if="packages.length && !unlimited" v-reveal="{ children: 'li', delay: 0.25, x: 24, y: 0 }" class="package-list">
-        <li v-for="p in packages" :key="p.id">
-          <div class="package-info">
-            <p class="package-name">{{ p.name }}</p>
-            <p class="hint">
-              <template v-if="qty(p) > 1">{{ coffees(p.coffeeCount * qty(p)) }} · </template>{{ money(p.price / p.coffeeCount) }} за кафе
-            </p>
-          </div>
-          <div class="package-buy">
+      <div v-if="packages.length && !unlimited" v-reveal="{ children: '.pack', delay: 0.25, y: 20 }" class="pack-grid">
+        <div
+          v-for="(p, i) in packages"
+          :key="p.id"
+          class="sticky sticky-wide pack"
+          :class="[['', 'sticky-blue', 'sticky-green'][i % 3], ['', 'tilt-slight', 'tilt-right'][i % 3]]"
+        >
+          <span class="magnet" :class="['m-red', 'm-blue', 'm-orange'][i % 3]" aria-hidden="true"></span>
+          <span class="pack-name">{{ p.name }}</span>
+          <span class="pack-meta">
+            <template v-if="qty(p) > 1">{{ coffees(p.coffeeCount * qty(p)) }} · </template>{{ money(p.price / p.coffeeCount) }} за кафе
+          </span>
+          <div class="pack-buy">
             <QuantityStepper
               :model-value="qty(p)"
               :disabled="busy"
               :label="`Брой ${p.name}`"
               @update:model-value="(v) => (quantities[p.id] = v)"
             />
-            <button v-magnet="{ strength: 0.2, padding: 16 }" class="btn package-price" :disabled="busy" @click="buy(p, $event)">
+            <button v-magnet="{ strength: 0.2, padding: 16 }" class="btn btn-small pack-price" :disabled="busy" @click="buy(p, $event)">
               {{ money(p.price * qty(p)) }}
             </button>
           </div>
-        </li>
-      </ul>
-      <ul v-else-if="loading" class="package-list" aria-hidden="true">
-        <li v-for="n in 2" :key="n">
-          <div class="package-info">
-            <span class="skeleton" style="width: 7rem; height: 1.1rem"></span>
-            <span class="skeleton" style="width: 9rem; height: 0.9rem; margin-top: 0.4rem"></span>
-          </div>
-          <span class="skeleton" style="width: 13rem; height: 2.75rem"></span>
-        </li>
-      </ul>
+        </div>
+      </div>
+      <div v-else-if="loading" class="pack-grid" aria-hidden="true">
+        <span v-for="n in 2" :key="n" class="skeleton" style="width: 11rem; height: 11rem; border-radius: 2px"></span>
+      </div>
       <p v-else-if="!unlimited" class="hint empty">Все още няма пакети. Администраторът трябва да добави поне един.</p>
     </section>
 
@@ -333,7 +337,7 @@ function historyLeave(el, done) {
       @drawing="(on) => (drawing = on)"
     />
 
-    <section v-reveal class="history" aria-labelledby="history-title">
+    <section v-reveal class="panel history" aria-labelledby="history-title">
       <h2 id="history-title">История</h2>
       <TransitionGroup
         v-if="activity.length"
@@ -351,6 +355,7 @@ function historyLeave(el, done) {
         >
           <template v-if="r.day">{{ r.day }}</template>
           <template v-else>
+            <AppIcon :name="r.item.type === 'PURCHASE' ? 'pack' : 'cup'" />
             <span class="activity-when">{{ time(r.item.createdAt) }}</span>
             <span class="activity-what">
               {{ r.item.type === 'PURCHASE' ? `Купен пакет „${r.item.label}“${r.item.quantity > 1 ? ` × ${r.item.quantity}` : ''} за ${money(r.item.amount)}` : r.item.label }}
@@ -407,59 +412,40 @@ function historyLeave(el, done) {
     "history history";
 }
 .notice-area { grid-area: notice; }
-.balance { grid-area: balance; }
-.packages { grid-area: packages; }
-.balance { position: relative; display: grid; gap: 1.1rem; padding: 2rem; overflow: hidden; }
-.balance-cup { position: absolute; top: 1.6rem; right: 1.4rem; }
-.greeting { color: var(--muted); font-weight: 500; }
-.figure { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
-.figure-number { font-size: clamp(5rem, 14vw, 7.5rem); }
-.figure-unit { font-size: var(--step-1); font-weight: 500; }
-.balance-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; }
-.btn-drink {
-  font-size: var(--step-1);
-  padding: 0.9rem 2rem;
-  border-radius: 10px;
-  box-shadow: 0 10px 26px -12px rgba(30, 75, 175, 0.7);
-}
-.btn-drink:disabled { box-shadow: none; }
+.hero { grid-area: balance; overflow: hidden; }
+.packages { grid-area: packages; display: grid; gap: 0.25rem; align-content: start; }
+.balance-cup { position: absolute; top: 1.4rem; right: 1.4rem; z-index: 1; }
+.figure-unit { color: var(--muted); }
 
 .undo-pop-enter-active { transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.2, 1.5, 0.4, 1); }
 .undo-pop-leave-active { transition: opacity 0.2s ease, transform 0.2s ease-in; }
 .undo-pop-enter-from, .undo-pop-leave-to { opacity: 0; transform: translateX(-10px) scale(0.9); }
 
-.packages { display: grid; gap: 0.25rem; }
-.package-list { list-style: none; padding: 0; margin: 1rem 0 0; }
-.package-list li {
-  transition: background-color 0.25s ease, padding 0.25s ease;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 0;
-  border-top: 1px solid var(--rule);
-}
-.package-name { font-weight: 600; }
-/* текстът се пренася в своята колона, а бутоните остават на реда (на много тесен екран слизат отдолу) */
-.package-list li { flex-wrap: wrap; row-gap: 0.6rem; }
-.package-info { flex: 1 1 6rem; min-width: 0; }
-.package-buy { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
-.package-price { min-width: 5.5rem; font-variant-numeric: tabular-nums; }
+/* пакетите като залепващи бележки */
+.pack-buy { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap; }
+.pack-price { min-width: 4.5rem; font-variant-numeric: tabular-nums; border-color: var(--sticky-ink); color: var(--sticky-ink); background: transparent; }
+@media (hover: hover) { .pack-price:hover:not(:disabled) { background: rgba(0, 0, 0, 0.06); border-color: var(--sticky-ink); } }
 .empty { margin-top: 1rem; }
 
 .board-area { grid-area: board; margin-top: 0.75rem; }
 .history { grid-area: history; margin-top: 1rem; }
-.figure-skeleton { width: 5rem; height: 5rem; border-radius: 12px; }
+.figure-skeleton { width: 6rem; height: 6rem; border-radius: var(--radius-panel); }
 .tally-skeleton { width: 12rem; height: 42px; }
-.activity { list-style: none; padding: 0; margin: 0.75rem 0 0; }
+
 .activity li {
   display: grid;
-  grid-template-columns: 3.5rem 1fr auto;
-  gap: 1rem;
+  grid-template-columns: 1.5rem 1fr auto;
+  grid-template-areas: "icon what delta" "icon when delta";
+  column-gap: 0.75rem;
+  align-items: center;
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--rule);
   font-size: var(--step--1);
 }
+.activity li :deep(.ico) { grid-area: icon; color: var(--muted); }
+.activity-what { grid-area: what; }
+.activity-when { grid-area: when; color: var(--muted); font-variant-numeric: tabular-nums; }
+.activity-delta { grid-area: delta; color: var(--muted); }
 .activity li.activity-day {
   display: block;
   padding: 1rem 0 0.35rem;
@@ -471,10 +457,8 @@ function historyLeave(el, done) {
   text-transform: uppercase;
 }
 .activity li.activity-day:first-child { padding-top: 0.25rem; }
-.activity-when { color: var(--muted); font-variant-numeric: tabular-nums; }
 .history-more { margin-top: 0.5rem; width: 100%; }
-.activity-delta { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
-.is-purchase .activity-delta { color: var(--green); }
+.is-purchase :deep(.ico), .is-purchase .activity-delta { color: var(--marker-green); }
 
 /* плаващият бутон (телепортиран в body, затова :global) */
 :global(.drink-fab) {
@@ -523,10 +507,6 @@ function historyLeave(el, done) {
   line-height: 1;
 }
 
-@media (hover: hover) {
-  .package-list li:hover { background: var(--board); padding-inline: 0.6rem; }
-}
-
 @media (max-width: 760px) {
   /* на телефон дъската е веднага след баланса – пакети се купуват рядко */
   .home {
@@ -537,18 +517,10 @@ function historyLeave(el, done) {
     grid-template-areas: "notice" "balance" "board" "packages" "history";
   }
   .board-area { margin-top: 0; }
-  .balance { padding: 1.5rem; }
-  .balance-cup { width: 58px; height: 58px; top: 1.2rem; right: 1rem; }
-  .btn-drink { width: 100%; min-height: 60px; font-size: 1.25rem; }
-  /* на телефон: какво е станало отгоре, часът по-дребно отдолу, промяната вдясно */
-  .activity li {
-    grid-template-columns: 1fr auto;
-    grid-template-areas: "what delta" "when delta";
-    row-gap: 0.1rem;
-    padding: 0.7rem 0;
-  }
-  .activity-what { grid-area: what; font-size: var(--step-0); }
-  .activity-when { grid-area: when; font-size: 0.8125rem; }
-  .activity-delta { grid-area: delta; align-self: center; font-size: var(--step-0); }
+  .balance-cup { width: 58px; height: 58px; top: 1.1rem; right: 1rem; }
+  .balance-actions .btn-drink { width: 100%; }
+  .activity li :deep(.ico) { align-self: start; margin-top: 0.15rem; }
+  .activity-what { font-size: var(--step-0); }
+  .activity-when { font-size: 0.8125rem; }
 }
 </style>

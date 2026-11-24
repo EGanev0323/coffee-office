@@ -35,8 +35,10 @@ frontend/src/
   notify.js, confirm.js   toast и диалог за потвърждение
   format.js         пари (EUR, bg-BG), дати, „1 кафе / N кафета“
   components/       WhiteBoard, TallyMarks, DrawingLayer, DrinkOverlay, CoffeePoster, BadgeShelf, BadgeUnlock,
-                    ConfirmDialog, ToastStack, QuantityStepper
+                    ConfirmDialog, ToastStack, QuantityStepper, AppIcon (24-те иконки), MarkerAvatar (инициали в цвят)
   badges.js         баджовете: картинки, заглавия, проверка за нов бадж след кафе
+  markers.js        markerClass(id) → m-blue … m-brown по (id − 1) % 6 (цветът на маркера за колегата)
+  assets/mark.svg   логото (малка дъска с чаша); също public/favicon.svg
   public/           manifest.json, icon.svg и PNG иконите (генерирани от icon.svg)
   components/fx/    SplitText, CountUp, ShinyText, ClickSpark (по React Bits), SteamCup, FloatingBeans
   motion/           index.js (GSAP + Lenis, reducedMotion, isPhone, haptic, dialogIn/Out, shake, pop, afterTick), directives.js (v-reveal, v-magnet,
@@ -99,9 +101,21 @@ Frontend Dockerfile-ът ползва `npm ci`. При добавяне на npm
 
 - Всички заявки минават през `api()` от `api.js`. Единственото изключение е SSE в `boardEvents.js`.
 - Всеки текст в интерфейса е на български.
-- Дизайн токените са в `styles.css` (`--board`, `--ink`, `--marker`, `--red`, `--font-ui`, `--font-hand` …).
+- **Дизайн система „Жива дъска“** – токените са в `styles.css`: светла тема в `:root`, тъмна в
+  `@media (prefers-color-scheme: dark)` (двете теми са задължителни). Имената следват дизайн системата
+  (`--wall`, `--surface`, `--whiteboard`, `--ink`, `--muted`, `--rule`, `--marker-blue/red/green/purple/orange/brown`,
+  `--sticky-yellow/blue/green/pink`, `--on-marker`, `--ghost`, сенки, радиуси, наклони …). Старите имена
+  (`--board`, `--marker`, `--red`, `--green`, `--crema`) са оставени като псевдоними към новите, за да работят
+  и в тъмната тема. След `:root` идват класовете от дизайн системата (панел, дъска, бутони, бележки, аватари,
+  магнити, чертички, таблици …), а най-долу рамката за телефон (горна лента, табове, листове).
 - Визията е „бяла дъска“: спокоен интерфейс с Onest, а само елементите „написани с маркер“ са с Caveat
-  (баланс, имена и чертички на дъската). Не разпространявай Caveat в обикновения UI.
+  (баланс, суми, имена и чертички на дъската). Не разпространявай Caveat в обикновения UI.
+- **Цвят на маркера за всеки колега:** `markers.js` → `markerClass(id)` дава `m-blue … m-brown` по `(id − 1) % 6`
+  (id 1 е синият). Класът задава `--m`, който четат `.board-name`, `.tally-stroke`, `.avatar`, `.balance-cell`.
+- **Иконки:** `AppIcon.vue` (24-те иконки инлайн, `stroke: currentColor`, клас `ico`). Без други иконни библиотеки и без emoji.
+- **Аватари:** `MarkerAvatar.vue` – инициалите на колегата върху неговия цвят на маркер.
+- **Лого:** `assets/mark.svg` (и `public/favicon.svg`) – малка дъска с чаша; в горната лента до името и като favicon.
+  Думата „Кафе дъската“ е жив текст с Caveat, не картинка.
 - След изпито кафе излиза плакатът (`CoffeePoster.vue`) с надпис според кое кафе за деня е: 1 – „Да ти е сладко първото кафе!“,
   2 – „…второто кафе!“, 3+ – „Да ти е сладко, ама много кафе пиеш!“. Надписът е истински текст с Oswald върху
   картината, а `motion/poster.js` го „отпечатва“ ред по ред. Oswald е само за плаката.

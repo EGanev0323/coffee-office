@@ -39,7 +39,7 @@ function change(delta) {
 .stepper {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--field-border);
   border-radius: 8px;
   background: var(--surface);
 }
@@ -57,10 +57,10 @@ function change(delta) {
   border-radius: 8px;
 }
 @media (hover: hover) {
-  .stepper-btn:hover:not(:disabled) { background: rgba(43, 31, 24, 0.05); }
+  .stepper-btn:hover:not(:disabled) { background: var(--wash); }
 }
-.stepper-btn:active:not(:disabled) { background: rgba(43, 31, 24, 0.08); }
-.stepper-btn:disabled { color: var(--rule); cursor: not-allowed; }
+.stepper-btn:active:not(:disabled) { background: var(--wash); }
+.stepper-btn:disabled { color: var(--muted); opacity: 0.5; cursor: not-allowed; }
 @media (max-width: 640px) {
   .stepper-btn { width: 2.75rem; height: 2.75rem; }
 }

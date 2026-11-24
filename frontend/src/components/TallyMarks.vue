@@ -103,8 +103,9 @@ function slash(g) {
 .tally-sm .tally-group { width: 30px; height: 32px; }
 
 .tally-stroke {
-  stroke: var(--marker);
-  stroke-width: 3.2;
+  fill: none;
+  stroke: var(--m, var(--marker-blue));
+  stroke-width: var(--stroke-tally);
   stroke-linecap: round;
   stroke-dasharray: 44;
   animation: draw 0.38s cubic-bezier(0.6, 0, 0.3, 1) both;
@@ -123,7 +124,7 @@ function slash(g) {
   font-family: var(--font-hand);
   font-weight: 700;
   font-size: 1.5rem;
-  color: var(--marker);
+  color: var(--m, var(--marker-blue));
   line-height: 1;
 }
 

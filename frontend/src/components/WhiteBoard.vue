@@ -8,6 +8,7 @@ import { notify } from '../notify'
 import { confirmAction } from '../confirm'
 import { afterTick, gsap, haptic, isPhone, reducedMotion } from '../motion'
 import { badgeImg, badgeTitle } from '../badges'
+import { markerClass } from '../markers'
 
 /*
   Общата дъска в офиса: всеки колега с кафета и неговите чертички.
@@ -327,7 +328,7 @@ onUnmounted(() => {
           :key="e.id"
           :data-board-row="e.id"
           class="board-row"
-          :class="{ 'is-me': e.id === currentUserId }"
+          :class="[markerClass(e.id), { 'is-me': e.id === currentUserId }]"
           :style="{ '--row': Math.min(i, 12) }"
         >
           <span class="board-who">
@@ -429,15 +430,16 @@ onUnmounted(() => {
 <style scoped>
 .board-frame {
   position: relative;
-  background: #C3C8CC;
+  background: var(--whiteboard-frame);
   border-radius: 10px;
   padding: 10px 10px 12px;
+  box-shadow: 0 12px 24px -16px rgba(0, 0, 0, 0.45);
 }
 .board {
   position: relative;
-  background: #FDFDFB;
+  background: var(--whiteboard);
   border-radius: 3px;
-  box-shadow: inset 0 0 0 1px #B3B9BE;
+  box-shadow: inset 0 0 0 1px var(--whiteboard-edge);
   padding: 1.25rem 1.75rem 1.75rem;
 }
 .board-title {
@@ -490,13 +492,13 @@ onUnmounted(() => {
   padding: 0.35rem 0.65rem;
   border-radius: 8px;
   background: var(--ink);
-  color: #fff;
+  color: var(--surface);
   font-family: var(--font-ui);
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 0 6px 16px -6px rgba(43, 31, 24, 0.6);
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.6);
 }
 .magnet-tip::after {
   content: '';
@@ -531,6 +533,7 @@ onUnmounted(() => {
   font-weight: 700;
   font-size: 1.7rem;
   line-height: 1.1;
+  color: var(--m, var(--ink));
   overflow-wrap: anywhere;
 }
 .is-me .board-name {
@@ -562,7 +565,7 @@ onUnmounted(() => {
   position: relative;
   height: 18px;
   margin: 0 1.5rem;
-  background: #A9AFB4;
+  background: var(--whiteboard-edge);
   border-radius: 0 0 6px 6px;
 }
 .marker {
