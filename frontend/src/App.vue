@@ -6,6 +6,8 @@ import ConfirmDialog from './components/ConfirmDialog.vue'
 import ToastStack from './components/ToastStack.vue'
 import ClickSpark from './components/fx/ClickSpark.vue'
 import BadgeUnlock from './components/BadgeUnlock.vue'
+import AppIcon from './components/AppIcon.vue'
+import markUrl from './assets/mark.svg'
 import { gsap, initSmoothScroll, reducedMotion, ScrollTrigger } from './motion'
 import { pageEnter, pageLeave } from './motion/pageTransition'
 import { useSlidingIndicator } from './motion/useSlidingIndicator'
@@ -83,7 +85,7 @@ onBeforeUnmount(() => {
 <template>
   <header v-if="showNav" ref="header" class="topbar-wrap">
     <div class="topbar">
-      <RouterLink to="/" class="brand">Кафе дъската</RouterLink>
+      <RouterLink to="/" class="brand"><img :src="markUrl" alt="" width="34" height="34" />Кафе дъската</RouterLink>
     </div>
   </header>
 
@@ -98,25 +100,15 @@ onBeforeUnmount(() => {
   <nav v-if="showNav" ref="tabs" class="tabbar" :class="{ 'is-hidden': typing }" aria-label="Основна навигация">
     <span ref="pill" class="tabbar-pill" aria-hidden="true"></span>
     <RouterLink to="/" class="tab" exact-active-class="is-active" active-class="">
-      <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4.5 9h12v5.5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z" />
-        <path d="M16.5 10.5h1.2a2.6 2.6 0 0 1 0 5.2h-1.5" />
-        <path d="M8.5 3.5c-.8 1 .8 1.8 0 3M12.5 3.5c-.8 1 .8 1.8 0 3" />
-      </svg>
+      <AppIcon name="cup" />
       <span>Кафета</span>
     </RouterLink>
     <RouterLink v-if="auth.isAdmin" to="/admin" class="tab">
-      <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="4.5" y="4" width="15" height="16.5" rx="2" />
-        <path d="M8.5 15.5v-3M12 15.5v-6M15.5 15.5v-4.5" />
-      </svg>
+      <AppIcon name="admin" />
       <span>Админ</span>
     </RouterLink>
     <RouterLink to="/account" class="tab">
-      <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="8.5" r="3.8" />
-        <path d="M4.5 20c.9-3.6 3.9-5.5 7.5-5.5s6.6 1.9 7.5 5.5" />
-      </svg>
+      <AppIcon name="user" />
       <span>Профил</span>
     </RouterLink>
   </nav>

@@ -7,6 +7,7 @@ import { useAuthStore } from '../stores/auth'
 import { notify } from '../notify'
 import SplitText from '../components/fx/SplitText.vue'
 import BadgeShelf from '../components/BadgeShelf.vue'
+import AppIcon from '../components/AppIcon.vue'
 import { shake } from '../motion'
 import { burst } from '../motion/burst'
 
@@ -88,7 +89,7 @@ async function submit() {
         <h2>Изход</h2>
         <p class="hint">Излизаш само от това устройство.</p>
       </div>
-      <button type="button" class="btn btn-danger" @click="logout">Излез</button>
+      <button type="button" class="btn btn-danger" @click="logout"><AppIcon name="logout" />Излез</button>
     </section>
   </div>
 </template>

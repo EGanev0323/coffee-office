@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useSlidingIndicator } from '../../motion/useSlidingIndicator'
 import { gsap, reducedMotion, ScrollTrigger, afterTick } from '../../motion'
+import AppIcon from '../../components/AppIcon.vue'
 
 const nav = ref(null)
 const line = ref(null)
@@ -27,10 +28,10 @@ function onLeave(el, done) {
 <template>
   <div class="admin">
     <nav ref="nav" class="subnav" aria-label="Админ секции">
-      <RouterLink :to="{ name: 'admin' }" exact-active-class="is-active" active-class="">Месечен отчет</RouterLink>
-      <RouterLink :to="{ name: 'admin-users' }">Колеги</RouterLink>
-      <RouterLink :to="{ name: 'admin-packages' }">Пакети</RouterLink>
-      <RouterLink :to="{ name: 'admin-qr' }">QR код</RouterLink>
+      <RouterLink :to="{ name: 'admin' }" exact-active-class="is-active" active-class=""><AppIcon name="chart" />Месечен отчет</RouterLink>
+      <RouterLink :to="{ name: 'admin-users' }"><AppIcon name="users" />Колеги</RouterLink>
+      <RouterLink :to="{ name: 'admin-packages' }"><AppIcon name="pack" />Пакети</RouterLink>
+      <RouterLink :to="{ name: 'admin-qr' }"><AppIcon name="sticky" />QR код</RouterLink>
       <span ref="line" class="subnav-line" aria-hidden="true"></span>
     </nav>
     <RouterView v-slot="{ Component, route }">
@@ -58,6 +59,9 @@ function onLeave(el, done) {
 }
 .subnav::-webkit-scrollbar { display: none; }
 .subnav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   color: var(--muted);
   text-decoration: none;
   font-weight: 600;
@@ -67,6 +71,7 @@ function onLeave(el, done) {
   flex: none;
   transition: color 0.2s ease;
 }
+.subnav a .ico { width: 1.125rem; height: 1.125rem; }
 @media (hover: hover) {
   .subnav a:hover { color: var(--ink); }
 }

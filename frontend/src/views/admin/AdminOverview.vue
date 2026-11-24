@@ -6,6 +6,9 @@ import { confirmAction } from '../../confirm'
 import { coffees, dateTime, money, monthLabel } from '../../format'
 import CountUp from '../../components/fx/CountUp.vue'
 import SplitText from '../../components/fx/SplitText.vue'
+import AppIcon from '../../components/AppIcon.vue'
+import MarkerAvatar from '../../components/MarkerAvatar.vue'
+import { markerClass } from '../../markers'
 
 const today = new Date()
 const year = ref(today.getFullYear())
@@ -94,14 +97,14 @@ onMounted(load)
 <template>
   <div class="overview">
     <header class="month">
-      <button class="btn btn-quiet month-arrow" aria-label="Предишен месец" @click="shift(-1)">‹</button>
+      <button class="btn btn-quiet btn-icon month-arrow" aria-label="Предишен месец" @click="shift(-1)"><AppIcon name="chevron-left" /></button>
       <SplitText tag="h1" class="month-name" :text="label" :stagger="0.025" :from="{ yPercent: 70, autoAlpha: 0 }" />
-      <button class="btn btn-quiet month-arrow" aria-label="Следващ месец" :disabled="isCurrentMonth" @click="shift(1)">›</button>
+      <button class="btn btn-quiet btn-icon month-arrow" aria-label="Следващ месец" :disabled="isCurrentMonth" @click="shift(1)"><AppIcon name="chevron-right" /></button>
     </header>
 
-    <section v-if="stats" v-reveal="{ children: '.collected, .facts > div', stagger: 0.08 }" class="summary" :aria-busy="loading">
+    <section v-if="stats" v-reveal="{ children: '.collected, .facts > div', stagger: 0.08 }" class="board summary" :aria-busy="loading">
       <p class="collected">
-        <CountUp class="collected-sum hand" :value="Number(stats.totalCollected)" :format="money" :duration="1.6" />
+        <CountUp class="collected-sum" :value="Number(stats.totalCollected)" :format="money" :duration="1.6" />
         <span class="collected-text">
           събрани през месеца от {{ stats.purchasesCount }}
           {{ stats.purchasesCount === 1 ? 'покупка' : 'покупки' }}
@@ -132,14 +135,19 @@ onMounted(load)
             </tr>
           </thead>
           <TransitionGroup v-reveal="{ children: 'tr', stagger: 0.04, y: 12 }" tag="tbody" name="row-sort">
-            <tr v-for="u in rows" :key="u.id" :class="{ 'is-muted': !u.active }">
+            <tr v-for="u in rows" :key="u.id" :class="[markerClass(u.id), { 'is-muted': !u.active }]">
               <td>
-                {{ u.displayName }}
-                <span v-if="!u.active" class="badge badge-off">неактивен</span>
-                <span class="row-meta">купени {{ u.bought }} · изпити {{ u.consumed }} · {{ money(u.spent) }}</span>
+                <span class="cell-person">
+                  <MarkerAvatar :name="u.displayName" :user-id="u.id" size="sm" />
+                  <span>
+                    {{ u.displayName }}
+                    <span v-if="!u.active" class="badge badge-off">неактивен</span>
+                    <span class="row-meta">купени {{ u.bought }} · изпити {{ u.consumed }} · {{ money(u.spent) }}</span>
+                  </span>
+                </span>
               </td>
               <td class="num">
-                <span class="balance-cell hand" :aria-label="u.unlimited ? 'безкрайни' : null">{{ u.unlimited ? '∞+1' : u.balance }}</span>
+                <span class="balance-cell" :aria-label="u.unlimited ? 'безкрайни' : null">{{ u.unlimited ? '∞+1' : u.balance }}</span>
               </td>
               <td class="num col-extra">{{ u.bought }}</td>
               <td class="num col-extra">{{ u.consumed }}</td>
@@ -193,37 +201,21 @@ onMounted(load)
 
 <style scoped>
 .overview { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-.month { display: flex; align-items: center; gap: 0.5rem; }
+.month { display: flex; align-items: center; gap: 0.5rem; justify-content: center; }
 .month-name { font-size: var(--step-2); text-transform: capitalize; min-width: 10ch; text-align: center; }
-.month-arrow { font-size: 1.5rem; line-height: 1; padding: 0.3rem 0.8rem; }
 
-.summary { display: grid; gap: 1.25rem; padding: 0.5rem 0 0.5rem; }
-.collected { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
-.collected-sum { font-size: clamp(4rem, 12vw, 6.5rem); }
-.collected-text { font-size: var(--step-1); font-weight: 500; max-width: 24ch; }
-
-/* три еднакви плочки – на телефон не се пренасят на различни места */
-.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin: 0; max-width: 640px; }
-.facts div {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 0.35rem;
-  padding: 0.75rem 0.9rem;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 12px;
-}
+/* три факта под сумата, на три колони и на телефон */
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem 1.5rem; margin: 0; max-width: 640px; }
+.facts div { display: flex; flex-direction: column; gap: 0.3rem; }
 .facts dt { color: var(--muted); font-size: var(--step--1); line-height: 1.3; }
 .fact-note { display: block; font-size: 0.75rem; opacity: 0.85; }
-.facts dd { margin: 0; font-size: var(--step-2); font-weight: 650; line-height: 1; font-variant-numeric: tabular-nums; }
+.facts dd { margin: 0; font-family: var(--font-hand); font-size: 2.25rem; font-weight: 700; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
 @media (max-width: 380px) {
   .facts { grid-template-columns: 1fr 1fr; }
   .facts div:last-child { grid-column: 1 / -1; }
 }
 
 .panel h2 + .hint { margin: 0.25rem 0 0.75rem; }
-.balance-cell { font-size: 1.6rem; }
 .month-arrow { transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1), background-color 0.2s ease; }
 @media (hover: hover) {
   .month-arrow:hover:not(:disabled) { transform: scale(1.15); }

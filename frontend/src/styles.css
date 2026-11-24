@@ -1,378 +1,441 @@
 /*
-  Кафе дъската – визия, вдъхновена от старата бяла дъска в офиса:
-  спокоен интерфейс, а баланс, чертички и суми са „написани с маркер“.
+  Кафе дъската · Жива дъска
+  Дизайн системата като CSS променливи: светла тема в :root, тъмна в @media (prefers-color-scheme: dark),
+  после класовете от дизайн системата (bundle.css) и накрая рамката за телефон (горна лента, табове, листове).
+  Шрифтовете идват от @fontsource (виж main.js) – тук няма @import.
 */
 :root {
-  --board: #F3F5F4;       /* бялата дъска */
-  --surface: #FFFFFF;
-  --ink: #2B1F18;         /* еспресо – основен текст */
-  --muted: #6E6660;
-  --rule: #D6DAD7;
-  --marker: #1E4BAF;      /* син маркер – баланс, основни действия */
-  --marker-soft: #E4EBF8;
-  --red: #B8372A;         /* червен маркер – грешки, изтриване */
-  --red-soft: #F7E3E0;
-  --crema: #F1E6D6;
-  --green: #2E7A4B;
+  color-scheme: light;
 
+  /* шрифтове */
   --font-ui: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   --font-hand: 'Caveat', 'Segoe Print', 'Comic Sans MS', cursive;
 
+  /* --- цветове (светла тема) --- */
+  --wall: #eceeec;
+  --surface: #ffffff;
+  --whiteboard: #fbfbf8;
+  --whiteboard-frame: #cdd2d6;
+  --whiteboard-edge: #b3bac0;
+  --ink: #2b1f18; /* еспресо – топлото мастило на дъската (запазено от старата визия) */
+  --muted: #6e6660;
+  --rule: #d9dddb;
+  --field-border: #848e95;
+  --marker-blue: #1e4baf;
+  --marker-blue-hover: #183d90;
+  --marker-red: #be3a2c;
+  --marker-red-hover: #9e2e22;
+  --marker-green: #23794a;
+  --marker-purple: #6b40a8;
+  --marker-orange: #a9500c;
+  --marker-brown: #7a4a2e;
+  --on-marker: #ffffff;
+  --red-soft: #fbeae7;
+  --ghost: rgba(30, 75, 175, 0.14);
+  --wash: rgba(31, 42, 51, 0.06);
+  --scrim: rgba(31, 42, 51, 0.42);
+  --sticky-yellow: #ffe27a;
+  --sticky-pink: #ffc9d6;
+  --sticky-blue: #c4e4ff;
+  --sticky-green: #cdefb8;
+  --sticky-ink: #3d3410;
+  --marker-soft: #e4ebf8; /* мек син фон: фокус-ореол, хапче на табовете */
+
+  /* --- стари имена (псевдоними), за да работят съществуващите компоненти и в двете теми --- */
+  --board: var(--wall);
+  --marker: var(--marker-blue);
+  --red: var(--marker-red);
+  --green: var(--marker-green);
+  --crema: var(--sticky-yellow);
+
+  /* --- сенки (светла тема) --- */
+  --shadow-sticky: 0 1px 1px rgba(31, 42, 51, 0.08), 0 10px 14px -8px rgba(31, 42, 51, 0.4);
+  --shadow-magnet: inset -2px -3px 0 rgba(0, 0, 0, 0.18), inset 2px 2px 0 rgba(255, 255, 255, 0.35), 0 2px 3px rgba(31, 42, 51, 0.35);
+  --shadow-board: inset 0 0 0 1px #b3bac0, 0 0 0 1px #b3bac0, 0 12px 24px -16px rgba(31, 42, 51, 0.35);
+  --shadow-dialog: 0 24px 64px rgba(31, 42, 51, 0.28);
+  --shadow-nav-active: inset 0 0 0 1px #d9dddb;
+
+  /* --- разстояния --- */
+  --space-4: 0.25rem;
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-20: 1.25rem;
+  --space-24: 1.5rem;
+  --space-32: 2rem;
+  --space-48: 3rem;
+
+  /* --- радиуси --- */
+  --radius-sticky: 2px;
+  --radius-focus: 4px;
+  --radius-control: 8px;
+  --radius-hand: 12px;
+  --radius-panel: 14px;
+  --radius-pill: 999px;
+
+  /* --- размери --- */
+  --page-max: 1120px;
+  --sticky-size: 11rem;
+  --magnet-size: 1.125rem;
+  --avatar-size: 2.25rem;
+  --icon-size: 1.25rem;
+  --dialog-width: 480px;
+
+  /* --- граници --- */
+  --border-hairline: 1px;
+  --border-board: 10px;
+  --border-hand: 2.5px;
+  --border-focus: 3px;
+  --stroke-tally: 3.2;
+  --stroke-icon: 2;
+
+  /* --- наклони --- */
+  --tilt-left: -2.5deg;
+  --tilt-slight: 1deg;
+  --tilt-right: 3deg;
+
+  /* --- текстови стъпки (за съществуващите scoped стилове) --- */
   --step--1: 0.875rem;
   --step-0: 1rem;
   --step-1: 1.25rem;
-  --step-2: 1.625rem;
+  --step-2: 1.75rem;
 
-  color-scheme: light;
-}
+  /* --- движение --- */
+  --dur-draw: 400ms;
+  --dur-erase: 550ms;
+  --dur-stick: 280ms;
+  --dur-fade: 200ms;
+  --ease-marker: cubic-bezier(0.3, 0.7, 0.4, 1);
+  --ease-stick: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-*, *::before, *::after { box-sizing: border-box; }
-
-html, body { margin: 0; }
-body {
-  font-family: var(--font-ui);
-  font-size: var(--step-0);
-  line-height: 1.5;
-  color: var(--ink);
-  background: var(--board);
-  -webkit-font-smoothing: antialiased;
-}
-
-h1, h2, h3 { line-height: 1.2; margin: 0; font-weight: 650; }
-h1 { font-size: var(--step-2); }
-h2 { font-size: var(--step-1); }
-p { margin: 0; }
-
-a { color: var(--marker); }
-
-:focus-visible {
-  outline: 3px solid var(--marker);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ---------- обща рамка (приложение за телефон) ---------- */
-:root {
+  /* --- рамка за телефон --- */
   --tabbar-h: 64px;
-  --fab-h: 52px; /* плаващият бутон „Изпих кафе“ и лентата при рисуване */
+  --fab-h: 52px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --gutter-l: max(1rem, env(safe-area-inset-left, 0px));
   --gutter-r: max(1rem, env(safe-area-inset-right, 0px));
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --wall: #121619;
+    --surface: #1b2126;
+    --whiteboard: #20272c;
+    --whiteboard-frame: #39434a;
+    --whiteboard-edge: #4a555d;
+    --ink: #eceff0;
+    --muted: #a2acb2;
+    --rule: #2e373d;
+    --field-border: #6f7a81;
+    --marker-blue: #8eaeff;
+    --marker-blue-hover: #b0c7ff;
+    --marker-red: #ff8f80;
+    --marker-red-hover: #ffb0a5;
+    --marker-green: #6fd39a;
+    --marker-purple: #c7a6ff;
+    --marker-orange: #ffae63;
+    --marker-brown: #dda987;
+    --on-marker: #121619;
+    --red-soft: #3a2422;
+    --ghost: rgba(142, 174, 255, 0.16);
+    --wash: rgba(236, 239, 240, 0.08);
+    --scrim: rgba(0, 0, 0, 0.62);
+    --sticky-yellow: #e6c95c;
+    --sticky-pink: #e6afbe;
+    --sticky-blue: #a6cdea;
+    --sticky-green: #b3da9f;
+    --sticky-ink: #2b240a;
+    --marker-soft: rgba(142, 174, 255, 0.16);
+
+    --shadow-sticky: 0 1px 1px rgba(0, 0, 0, 0.3), 0 10px 16px -8px rgba(0, 0, 0, 0.7);
+    --shadow-magnet: inset -2px -3px 0 rgba(0, 0, 0, 0.25), inset 2px 2px 0 rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.6);
+    --shadow-board: inset 0 0 0 1px #4a555d, 0 0 0 1px #4a555d, 0 12px 24px -16px rgba(0, 0, 0, 0.8);
+    --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.7);
+    --shadow-nav-active: inset 0 0 0 1px #2e373d;
+  }
+}
+
+/* ============================ основа ============================ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-body { -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--wall);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+h1, h2, h3 { margin: 0; color: var(--ink); }
+h1 { font-size: 1.75rem; line-height: 1.15; font-weight: 700; }
+h2 { font-size: 1.25rem; line-height: 1.2; font-weight: 650; }
+h3 { font-size: 1rem; line-height: 1.3; font-weight: 650; }
+p { margin: 0; }
+a { color: var(--marker-blue); text-underline-offset: 3px; }
+:focus-visible { outline: var(--border-focus) solid var(--marker-blue); outline-offset: 2px; border-radius: var(--radius-focus); }
 /* без забавянето за двойно докосване (zoom) върху бутони и линкове */
 a, button, label, input, select, summary, [role="button"] { touch-action: manipulation; }
 
-.topbar-wrap {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  padding-top: var(--safe-top);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-.topbar-wrap.is-scrolled {
-  background: rgba(243, 245, 244, 0.82);
-  -webkit-backdrop-filter: saturate(1.4) blur(12px);
-  backdrop-filter: saturate(1.4) blur(12px);
-  box-shadow: 0 1px 0 var(--rule);
-}
-.topbar {
-  display: flex;
-  align-items: center;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 0.85rem var(--gutter-r) 0.6rem var(--gutter-l);
-}
-.brand {
-  font-family: var(--font-hand);
-  font-size: 1.85rem;
-  font-weight: 700;
-  color: var(--ink);
-  text-decoration: none;
-  line-height: 1;
-  display: inline-block;
-  transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
-}
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.hint { color: var(--muted); font-size: 0.875rem; }
+.stack > * + * { margin-top: var(--space-16); }
+.hand { font-family: var(--font-hand); font-weight: 700; line-height: 1; color: var(--marker-blue); }
+.ico { width: var(--icon-size); height: var(--icon-size); flex: none; fill: none; stroke: currentColor; stroke-width: var(--stroke-icon); stroke-linecap: round; stroke-linejoin: round; }
 
-.page {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 0.5rem var(--gutter-r) calc(3rem + var(--safe-bottom)) var(--gutter-l);
+/* цветове на маркера за колегите: задават --m */
+.m-blue { --m: var(--marker-blue); }
+.m-red { --m: var(--marker-red); }
+.m-green { --m: var(--marker-green); }
+.m-purple { --m: var(--marker-purple); }
+.m-orange { --m: var(--marker-orange); }
+.m-brown { --m: var(--marker-brown); }
+
+/* ============================ панел (хартия) ============================ */
+.panel { background: var(--surface); border: var(--border-hairline) solid var(--rule); border-radius: var(--radius-panel); padding: var(--space-24); }
+.panel > h2 + .hint { margin-top: var(--space-4); }
+
+/* ============================ дъска (сцената) ============================ */
+.board { position: relative; background: var(--whiteboard); border: var(--border-board) solid var(--whiteboard-frame); border-radius: var(--radius-control); box-shadow: var(--shadow-board); padding: var(--space-24) var(--space-32) var(--space-32); }
+.board-tray { display: block; height: 6px; margin: 0 12%; background: var(--whiteboard-frame); border-radius: 0 0 4px 4px; box-shadow: 0 1px 0 var(--whiteboard-edge); }
+.board-title { font-family: var(--font-hand); font-weight: 700; font-size: 2.5rem; line-height: 1; margin-bottom: var(--space-16); color: var(--ink); }
+
+/* ============================ бутони ============================ */
+.btn { font: inherit; font-weight: 600; font-size: 0.875rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; padding: 0.6rem 1rem; border-radius: var(--radius-control); border: var(--border-hairline) solid var(--field-border); background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap; transition: background var(--dur-fade), border-color var(--dur-fade), color var(--dur-fade), box-shadow 0.25s ease, scale 0.15s ease; }
+.btn .ico { width: 1.125rem; height: 1.125rem; }
+.btn:active:not(:disabled) { scale: 0.96; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--marker-blue); border-color: var(--marker-blue); color: var(--on-marker); }
+.btn-danger { color: var(--marker-red); }
+.btn-danger-fill { background: var(--marker-red); border-color: var(--marker-red); color: var(--on-marker); }
+.btn-quiet { border-color: transparent; background: transparent; color: var(--muted); }
+.btn-small { padding: 0.35rem 0.7rem; }
+.btn-icon { padding: 0.5rem; }
+.btn-icon .ico { width: var(--icon-size); height: var(--icon-size); }
+@media (hover: hover) {
+  .btn:hover:not(:disabled) { border-color: var(--ink); }
+  .btn-primary:hover:not(:disabled) { background: var(--marker-blue-hover); border-color: var(--marker-blue-hover); box-shadow: 0 8px 22px -8px rgba(30, 75, 175, 0.5); }
+  .btn-danger:hover:not(:disabled) { border-color: var(--marker-red); background: var(--red-soft); }
+  .btn-danger-fill:hover:not(:disabled) { background: var(--marker-red-hover); border-color: var(--marker-red-hover); }
+  .btn-quiet:hover:not(:disabled) { color: var(--ink); border-color: transparent; background: var(--wash); }
 }
+.btn-quiet:active:not(:disabled) { background: var(--wash); }
+
+/* ръчно нарисуван бутон – „написан на дъската с маркер“ */
+.btn-hand {
+  font-family: var(--font-hand); font-weight: 700; font-size: 1.625rem; line-height: 1;
+  padding: 0.35rem 1.25rem 0.45rem; color: var(--marker-blue); background: transparent;
+  border: var(--border-hand) solid var(--marker-blue);
+  border-radius: calc(var(--radius-hand) - 2px) calc(var(--radius-hand) + 2px) calc(var(--radius-hand) - 3px) calc(var(--radius-hand) + 1px) / calc(var(--radius-hand) + 1px) calc(var(--radius-hand) - 3px) calc(var(--radius-hand) + 2px) calc(var(--radius-hand) - 2px);
+}
+@media (hover: hover) { .btn-hand:hover:not(:disabled) { background: var(--ghost); } }
+
+/* бутонът „Изпих кафе“: запълнен маркер, ръкописен, с магнит */
+.btn-drink {
+  position: relative; font-family: var(--font-hand); font-weight: 700; font-size: 1.625rem; line-height: 1;
+  padding: 0.7rem 2.25rem 0.8rem; background: var(--marker-blue); border: 0; color: var(--on-marker); cursor: pointer;
+  border-radius: calc(var(--radius-hand) - 2px) calc(var(--radius-hand) + 2px) calc(var(--radius-hand) - 3px) calc(var(--radius-hand) + 1px) / calc(var(--radius-hand) + 1px) calc(var(--radius-hand) - 3px) calc(var(--radius-hand) + 2px) calc(var(--radius-hand) - 2px);
+  transform: rotate(calc(var(--tilt-slight) * -1));
+  transition: background var(--dur-fade);
+}
+@media (hover: hover) { .btn-drink:hover:not(:disabled) { background: var(--marker-blue-hover); } }
+.btn-drink:active:not(:disabled) { transform: rotate(0deg) scale(0.98); }
+.btn-drink:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-drink .magnet { position: absolute; top: -0.5rem; right: 0.9rem; }
+
+/* ============================ форми ============================ */
+.field { display: grid; gap: 0.35rem; }
+.field label { font-size: 0.875rem; font-weight: 600; }
+.field input, .field select, .input { font: inherit; padding: 0.6rem 0.75rem; border: var(--border-hairline) solid var(--field-border); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); width: 100%; transition: border-color var(--dur-fade), box-shadow 0.25s ease; }
+.field input::placeholder, .input::placeholder { color: var(--muted); }
+.field input:focus, .field select:focus, .input:focus { outline: 2px solid var(--marker-blue); outline-offset: 0; border-color: var(--marker-blue); box-shadow: 0 0 0 4px var(--marker-soft); }
+.field.is-invalid input { border-color: var(--marker-red); }
+.check { display: flex; align-items: center; gap: var(--space-8); font-size: 0.875rem; font-weight: 500; }
+.check input { width: 1.1rem; height: 1.1rem; accent-color: var(--marker-blue); }
+.form-error { display: flex; align-items: center; gap: 0.4rem; color: var(--marker-red); font-size: 0.875rem; font-weight: 500; }
+.form-grid { display: grid; gap: var(--space-16); grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); align-items: end; }
+
+/* ============================ таблици ============================ */
+/* relative: скритите заглавия да не разтягат страницата.
+   overflow-y: hidden – таблицата се плъзга само настрани. Иначе редовете, които още „влизат“ с анимация
+   (транслирани надолу), я правят скролируема и вертикално и тя „гълта“ пръста/колелцето вместо страницата. */
+.table-wrap { overflow-x: auto; overflow-y: hidden; position: relative; }
+table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+th { text-align: left; font-weight: 600; color: var(--muted); padding: 0.6rem 0.75rem; border-bottom: var(--border-hairline) solid var(--rule); white-space: nowrap; }
+td { padding: 0.7rem 0.75rem; border-bottom: var(--border-hairline) solid var(--rule); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.is-muted td { color: var(--muted); }
+.sort-btn { font: inherit; font-weight: 600; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+th[aria-sort] .sort-btn, .sort-btn[aria-sort] { color: var(--ink); }
+th[aria-sort="ascending"] .sort-btn::after { content: " ↑"; }
+th[aria-sort="descending"] .sort-btn::after { content: " ↓"; }
+.cell-person { display: flex; align-items: center; gap: var(--space-8); }
+.balance-cell { font-family: var(--font-hand); font-weight: 700; font-size: 1.6rem; line-height: 1; color: var(--m, var(--marker-blue)); }
+
+/* ============================ бадж ============================ */
+.badge { display: inline-block; font-size: 0.75rem; font-weight: 600; line-height: 1.4; padding: 0.1rem 0.55rem; border-radius: var(--radius-pill); background: var(--sticky-green); color: var(--sticky-ink); }
+.badge-off { background: var(--red-soft); color: var(--marker-red); }
+.badge-note { background: var(--sticky-yellow); color: var(--sticky-ink); }
+
+/* ============================ аватар с маркер ============================ */
+.avatar { display: inline-grid; place-items: center; width: var(--avatar-size); height: var(--avatar-size); border-radius: var(--radius-pill); background: var(--m, var(--marker-blue)); color: var(--on-marker); font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.02em; flex: none; }
+.avatar-sm { width: 1.75rem; height: 1.75rem; font-size: 0.6875rem; }
+.avatar-ring { background: transparent; color: var(--m, var(--marker-blue)); box-shadow: inset 0 0 0 var(--border-hand) var(--m, var(--marker-blue)); }
+
+/* ============================ магнит ============================ */
+.magnet { display: inline-block; width: var(--magnet-size); height: var(--magnet-size); border-radius: var(--radius-pill); background: var(--m, var(--marker-red)); box-shadow: var(--shadow-magnet); flex: none; }
+.magnet-lg { width: 1.5rem; height: 1.5rem; }
+
+/* ============================ залепена бележка ============================ */
+.sticky {
+  --tilt: var(--tilt-left);
+  position: relative; display: block; width: var(--sticky-size); min-height: var(--sticky-size);
+  padding: 1.35rem var(--space-16) var(--space-16); background: var(--sticky-yellow); color: var(--sticky-ink);
+  border-radius: var(--radius-sticky); box-shadow: var(--shadow-sticky);
+  font-family: var(--font-hand); font-weight: 700; font-size: 1.5rem; line-height: 1.1;
+  transform: rotate(var(--tilt));
+  animation: stick-on var(--dur-stick) var(--ease-stick) both;
+}
+.sticky .magnet { position: absolute; top: -0.4rem; left: 50%; margin-left: calc(var(--magnet-size) / -2); }
+.sticky-sign { display: block; margin-top: var(--space-8); font-size: 1.125rem; }
+.sticky-pink { background: var(--sticky-pink); }
+.sticky-blue { background: var(--sticky-blue); }
+.sticky-green { background: var(--sticky-green); }
+.sticky.tilt-slight { --tilt: var(--tilt-slight); }
+.sticky.tilt-right { --tilt: var(--tilt-right); }
+.sticky-wide { width: auto; min-height: 0; }
+.sticky .btn { font-family: var(--font-ui); }
+@keyframes stick-on { from { opacity: 0; transform: rotate(var(--tilt)) translateY(-10px) scale(1.04); } to { opacity: 1; transform: rotate(var(--tilt)); } }
+
+/* ============================ диалог ============================ */
+dialog, .dialog { position: relative; border: 0; border-radius: var(--radius-panel); padding: 0; width: min(92vw, var(--dialog-width)); color: var(--ink); background: var(--surface); box-shadow: var(--shadow-dialog); }
+dialog::backdrop { background: var(--scrim); }
+dialog:focus, dialog:focus-visible { outline: none; }
+.dialog > .magnet, dialog > .magnet { position: absolute; top: -0.45rem; left: 50%; margin-left: calc(var(--magnet-size) / -2); z-index: 1; }
+.dialog-body { padding: var(--space-24); display: grid; gap: var(--space-16); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-8); flex-wrap: wrap; }
+
+/* ============================ чертички ============================ */
+.tally { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; min-height: 42px; }
+.tally-group { width: 40px; height: 42px; overflow: visible; }
+.tally-sm { gap: 0.25rem 0.6rem; min-height: 32px; }
+.tally-sm .tally-group { width: 30px; height: 32px; }
+.tally-stroke { fill: none; stroke: var(--m, var(--marker-blue)); stroke-width: var(--stroke-tally); stroke-linecap: round; }
+.tally-more { font-family: var(--font-hand); font-weight: 700; font-size: 1.5rem; color: var(--m, var(--marker-blue)); line-height: 1; }
+
+/* ============================ баланс (началната дъска) ============================ */
+.balance { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-16) var(--space-32); align-items: start; }
+.balance-main { display: grid; gap: var(--space-12); }
+.greeting { display: flex; align-items: center; gap: var(--space-8); color: var(--muted); font-weight: 500; }
+.figure { display: flex; align-items: baseline; gap: var(--space-12); flex-wrap: wrap; }
+.figure-number { font-family: var(--font-hand); font-weight: 700; font-size: clamp(5.5rem, 16vw, 8rem); line-height: 0.9; color: var(--marker-blue); }
+.figure-unit { font-size: 1.25rem; font-weight: 500; }
+.balance-actions { display: flex; gap: var(--space-12); align-items: center; flex-wrap: wrap; margin-top: var(--space-8); }
+.balance-notes { display: grid; gap: var(--space-16); justify-items: end; }
+
+/* ============================ редове на общата дъска ============================ */
+.board-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-12); }
+.board-row { display: grid; grid-template-columns: minmax(8rem, 13rem) 1fr auto; align-items: center; gap: var(--space-16); }
+.board-name { font-family: var(--font-hand); font-weight: 700; font-size: 1.75rem; line-height: 1.1; color: var(--m, var(--ink)); overflow-wrap: anywhere; }
+.is-me .board-name { text-decoration: underline; text-decoration-color: var(--marker-red); text-decoration-thickness: 2.5px; text-underline-offset: 6px; }
+.board-count { font-family: var(--font-hand); font-weight: 700; font-size: 1.5rem; color: var(--muted); min-width: 2ch; text-align: right; }
+.board-layout { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-24); align-items: start; }
+.board-side { display: grid; gap: var(--space-20); padding-top: var(--space-8); }
+
+/* ============================ пакети (бележки за взимане) ============================ */
+.pack-grid { display: flex; flex-wrap: wrap; gap: var(--space-24); padding-top: var(--space-16); }
+.pack { display: grid; gap: var(--space-8); align-content: start; }
+.pack-name { font-size: 2rem; line-height: 1; }
+.pack-meta { font-family: var(--font-ui); font-weight: 500; font-size: 0.8125rem; line-height: 1.4; }
+
+/* ============================ история ============================ */
+.activity { list-style: none; padding: 0; margin: var(--space-12) 0 0; }
+.activity-when { color: var(--muted); font-variant-numeric: tabular-nums; }
+.activity-delta { font-family: var(--font-hand); font-weight: 700; font-size: 1.5rem; line-height: 1; color: var(--muted); min-width: 2.5ch; text-align: right; }
+
+/* ============================ месечен отчет ============================ */
+.month { display: flex; align-items: center; gap: var(--space-8); }
+.month-name { min-width: 10ch; text-align: center; text-transform: capitalize; }
+.summary { display: grid; gap: var(--space-20); }
+.collected { display: flex; align-items: baseline; gap: var(--space-16); flex-wrap: wrap; }
+.collected-sum { font-family: var(--font-hand); font-weight: 700; font-size: clamp(4rem, 12vw, 6.5rem); line-height: 0.95; color: var(--marker-blue); }
+.collected-text { font-size: 1.25rem; font-weight: 500; max-width: 24ch; }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-12) 2.5rem; margin: 0; }
+.facts div { display: grid; gap: 0.1rem; }
+.facts dt { color: var(--muted); font-size: 0.875rem; }
+.facts dd { margin: 0; font-size: 1.25rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+
+/* ============================ празно състояние ============================ */
+.empty { display: grid; justify-items: center; text-align: center; gap: var(--space-12); padding: var(--space-48) var(--space-24); }
+.empty-note { display: grid; place-items: center; width: 7rem; height: 7rem; border: var(--border-hand) dashed var(--field-border); border-radius: var(--radius-sticky); color: var(--muted); transform: rotate(var(--tilt-left)); }
+.empty-note .ico { width: 2rem; height: 2rem; }
+.empty-title { font-family: var(--font-hand); font-weight: 700; font-size: 2rem; line-height: 1; }
+.empty-text { color: var(--muted); max-width: 34ch; }
+
+/* ============================ скелет ============================ */
+.skeleton { display: block; border-radius: var(--radius-control); background: var(--ghost); animation: skeleton-pulse 1.4s ease-in-out infinite; }
+.skeleton-line { height: 0.875rem; }
+.skeleton-circle { width: var(--avatar-size); height: var(--avatar-size); border-radius: var(--radius-pill); }
+@keyframes skeleton-pulse { 50% { opacity: 0.45; } }
+
+/* ============================ рамка за телефон ============================ */
+/* горна лента: само логото и името; скрива се при скролване надолу */
+.topbar-wrap { position: sticky; top: 0; z-index: 40; padding-top: var(--safe-top); transition: background-color 0.3s ease, box-shadow 0.3s ease; }
+.topbar-wrap.is-scrolled { background: color-mix(in srgb, var(--wall) 82%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(12px); backdrop-filter: saturate(1.4) blur(12px); box-shadow: 0 1px 0 var(--rule); }
+.topbar { display: flex; align-items: center; max-width: var(--page-max); margin: 0 auto; padding: 0.7rem var(--gutter-r) 0.55rem var(--gutter-l); }
+.brand { display: inline-flex; align-items: center; gap: var(--space-8); font-family: var(--font-hand); font-size: 2rem; font-weight: 700; color: var(--ink); text-decoration: none; line-height: 1; }
+.brand img { width: 2.1rem; height: 2.1rem; }
+
+.page { max-width: var(--page-max); margin: 0 auto; padding: 0.5rem var(--gutter-r) calc(3rem + var(--safe-bottom)) var(--gutter-l); }
 .page.has-tabs { padding-bottom: calc(var(--tabbar-h) + 2.5rem + var(--safe-bottom)); }
 
-/* долната лента с табове – в зоната на палеца */
+/* долна лента с табове – в зоната на палеца */
 .tabbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 45;
-  display: flex;
-  justify-content: center;
-  gap: 0.25rem;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+  display: flex; justify-content: center; gap: 0.25rem;
   height: calc(var(--tabbar-h) + var(--safe-bottom));
   padding: 0.4rem var(--gutter-r) calc(0.4rem + var(--safe-bottom)) var(--gutter-l);
-  background: rgba(255, 255, 255, 0.9);
-  -webkit-backdrop-filter: saturate(1.4) blur(14px);
-  backdrop-filter: saturate(1.4) blur(14px);
-  box-shadow: 0 -1px 0 var(--rule), 0 -8px 24px -18px rgba(43, 31, 24, 0.35);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px);
+  box-shadow: 0 -1px 0 var(--rule), 0 -8px 24px -18px rgba(0, 0, 0, 0.35);
   transition: transform 0.25s ease;
 }
 .tabbar.is-hidden { transform: translateY(110%); }
-.tabbar-pill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-radius: 14px;
-  background: var(--marker-soft);
-  opacity: 0;
-  pointer-events: none;
-}
-.tab {
-  position: relative;
-  z-index: 1;
-  flex: 1 1 0;
-  max-width: 140px;
-  min-width: 0;
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 0.15rem;
-  border-radius: 14px;
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  transition: color 0.2s ease, scale 0.15s ease;
-}
+.tabbar-pill { position: absolute; top: 0; left: 0; border-radius: 14px; background: var(--marker-soft); opacity: 0; pointer-events: none; }
+.tab { position: relative; z-index: 1; flex: 1 1 0; max-width: 140px; min-width: 0; display: grid; justify-items: center; align-content: center; gap: 0.15rem; border-radius: 14px; color: var(--muted); text-decoration: none; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.01em; transition: color 0.2s ease, scale 0.15s ease; }
 .tab:active { scale: 0.92; }
-.tab.is-active { color: var(--marker); }
-.tab-icon {
-  width: 26px;
-  height: 26px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.tab.is-active .tab-icon { stroke-width: 2.2; }
+.tab.is-active { color: var(--marker-blue); }
+.tab .ico { width: 24px; height: 24px; }
+.tab.is-active .ico { stroke-width: 2.3; }
 
 /* показва се само на телефон / само на по-широк екран */
 @media (max-width: 640px) { .hide-phone { display: none !important; } }
 @media (min-width: 641px) { .only-phone { display: none !important; } }
 
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 14px;
-  padding: 1.5rem;
-}
-.panel > h2 + .hint { margin-top: 0.25rem; }
-
-.hint { color: var(--muted); font-size: var(--step--1); }
-.stack > * + * { margin-top: 1rem; }
-
-/* ---------- бутони ---------- */
-.btn {
-  font: inherit;
-  font-weight: 600;
-  font-size: var(--step--1);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--rule);
-  background: var(--surface);
-  color: var(--ink);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.25s ease, scale 0.15s ease;
-}
-.btn:active:not(:disabled) { scale: 0.96; }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn-primary { background: var(--marker); border-color: var(--marker); color: #fff; }
-.btn-danger { color: var(--red); }
-.btn-danger-fill { background: var(--red); border-color: var(--red); color: #fff; }
-.btn-quiet { border-color: transparent; background: transparent; color: var(--muted); }
-.btn-small { padding: 0.35rem 0.7rem; }
-/* hover само с мишка – на телефон ефектът „залепва“ след докосване */
-@media (hover: hover) {
-  .btn:hover:not(:disabled) { border-color: var(--ink); }
-  .btn-primary:hover:not(:disabled) {
-    background: #183d90;
-    border-color: #183d90;
-    box-shadow: 0 8px 22px -8px rgba(30, 75, 175, 0.65);
-  }
-  .btn-danger:hover:not(:disabled) { border-color: var(--red); background: var(--red-soft); }
-  .btn-danger-fill:hover:not(:disabled) { background: #9a2d22; border-color: #9a2d22; }
-  .btn-quiet:hover:not(:disabled) { color: var(--ink); border-color: transparent; background: rgba(43, 31, 24, 0.05); }
-}
-/* на телефон – кратка обратна връзка при докосване вместо hover */
-.btn-quiet:active:not(:disabled) { background: rgba(43, 31, 24, 0.07); }
-.btn-danger:active:not(:disabled) { background: var(--red-soft); }
-
-/* ---------- форми ---------- */
-.field { display: grid; gap: 0.35rem; }
-.field label { font-size: var(--step--1); font-weight: 600; }
-.field input, .field select {
-  font: inherit;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--ink);
-  width: 100%;
-}
-.field input, .field select { transition: border-color 0.2s ease, box-shadow 0.25s ease; }
-.field input:focus, .field select:focus {
-  outline: 2px solid var(--marker);
-  outline-offset: 0;
-  border-color: var(--marker);
-  box-shadow: 0 0 0 5px var(--marker-soft);
-}
-.check { display: flex; align-items: center; gap: 0.5rem; font-size: var(--step--1); font-weight: 500; }
-.check input { width: 1.1rem; height: 1.1rem; accent-color: var(--marker); }
-.form-error { color: var(--red); font-size: var(--step--1); }
-.form-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); align-items: end; }
-
-/* ---------- таблици ---------- */
-/* relative: скритите заглавия да не разтягат страницата.
-   overflow-y: hidden – таблицата се плъзга само настрани. Иначе редовете, които още „влизат“ с анимация
-   (транслирани надолу), я правят скролируема и вертикално и тя „гълта“ пръста/колелцето вместо страницата. */
-.table-wrap { overflow-x: auto; overflow-y: hidden; position: relative; }
-table { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
-th {
-  text-align: left;
-  font-weight: 600;
-  color: var(--muted);
-  padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid var(--rule);
-  white-space: nowrap;
-}
-td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--rule); vertical-align: middle; }
-tr:last-child td { border-bottom: 0; }
-td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-tr.is-muted td { color: var(--muted); }
-.sort-btn { font: inherit; font-weight: 600; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
-.sort-btn[aria-sort] { color: var(--ink); }
-
-.badge {
-  display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.1rem 0.5rem;
-  border-radius: 999px;
-  background: var(--crema);
-  color: var(--ink);
-}
-.badge-off { background: var(--red-soft); color: var(--red); }
-
-/* ---------- „маркер“ елементи ---------- */
-.hand {
-  font-family: var(--font-hand);
-  font-weight: 700;
-  color: var(--marker);
-  line-height: 1;
-}
-
-/* ---------- toast ---------- */
-.toasts {
-  position: fixed;
-  left: 50%;
-  bottom: calc(1.25rem + var(--safe-bottom));
-  transition: bottom 0.25s ease;
-  transform: translateX(-50%);
-  display: grid;
-  gap: 0.5rem;
-  z-index: 50;
-  width: min(92vw, 440px);
-}
-.toasts.is-raised { bottom: calc(var(--tabbar-h) + 0.75rem + var(--safe-bottom)); }
-/* над плаващия бутон „Изпих кафе“ (HomeView слага has-fab на body), за да не го закриват */
-body.has-fab .toasts.is-raised { bottom: calc(var(--tabbar-h) + var(--fab-h) + 1.5rem + var(--safe-bottom)); }
-.toast {
-  background: var(--ink);
-  color: #fff;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
-  font-size: var(--step--1);
-  font-weight: 500;
-}
-.toast-error { background: var(--red); }
-
-/* ---------- диалози ---------- */
-dialog {
-  border: 0;
-  border-radius: 14px;
-  padding: 0;
-  width: min(92vw, 460px);
-  color: var(--ink);
-  box-shadow: 0 20px 60px rgba(43, 31, 24, 0.25);
-}
-dialog::backdrop { background: rgba(43, 31, 24, 0.35); }
-/* диалогът сам приема фокуса (autofocus), за да не изскача клавиатурата на телефона */
-dialog:focus, dialog:focus-visible { outline: none; }
-.dialog-body { padding: 1.5rem; display: grid; gap: 1rem; }
-.dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap; }
-
-/* ---------- ефекти (motion/) ---------- */
-/* прожектор, който следва курсора върху панела (v-spotlight) */
+/* ============================ ефекти (motion/) ============================ */
 .spotlight { position: relative; isolation: isolate; }
 .spotlight::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 2;
-  opacity: 0;
-  background: radial-gradient(420px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(30, 75, 175, 0.07), transparent 60%);
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2; opacity: 0;
+  background: radial-gradient(420px circle at var(--spot-x, 50%) var(--spot-y, 50%), var(--ghost), transparent 60%);
   transition: opacity 0.35s ease;
 }
 .spotlight:hover::after { opacity: 1; }
-
-/* летящи зърна и чертички (motion/burst.js) */
-.fx-burst-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 70;
-  overflow: hidden;
-}
+.fx-burst-layer { position: fixed; inset: 0; pointer-events: none; z-index: 70; overflow: hidden; }
 .fx-burst-piece { position: absolute; top: 0; left: 0; display: block; will-change: transform; }
 
-/* сиви блокове на мястото на данните, докато се зареждат */
-.skeleton {
-  display: block;
-  border-radius: 8px;
-  background: linear-gradient(90deg, #E4E7E5 0%, #EEF0EF 40%, #E4E7E5 80%) 0 0 / 300% 100%;
-  animation: skeleton 1.4s ease-in-out infinite;
-}
-@keyframes skeleton {
-  from { background-position: 100% 0; }
-  to { background-position: 0 0; }
-}
-
-.visually-hidden {
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
-}
-
+/* ============================ намалено движение ============================ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-@media (max-width: 520px) {
-  .panel { padding: 1.25rem; border-radius: 16px; }
+/* ============================ телефон: по-големи цели, листове, списъци ============================ */
+@media (max-width: 560px) {
+  .board { padding: var(--space-16) var(--space-16) var(--space-20); border-width: 8px; }
 }
-
-/* ---------- телефон: по-големи цели за пръста ---------- */
 @media (max-width: 640px) {
   .btn { min-height: 44px; padding-inline: 1.1rem; }
   .btn-small { min-height: 38px; }
@@ -383,27 +446,16 @@ dialog:focus, dialog:focus-visible { outline: none; }
 
   /* диалозите излизат отдолу като „лист“ */
   dialog {
-    width: 100%;
-    max-width: 100%;
-    margin: auto 0 0;
-    border-radius: 20px 20px 0 0;
-    max-height: calc(100dvh - 2.5rem);
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    width: 100%; max-width: 100%; margin: auto 0 0;
+    border-radius: 20px 20px 0 0; max-height: calc(100dvh - 2.5rem);
+    overflow-y: auto; overscroll-behavior: contain;
   }
-  dialog::before {
-    content: '';
-    display: block;
-    width: 40px;
-    height: 5px;
-    margin: 10px auto 0;
-    border-radius: 3px;
-    background: var(--rule);
-  }
+  dialog::before { content: ''; display: block; width: 40px; height: 5px; margin: 10px auto 0; border-radius: 3px; background: var(--rule); }
+  /* на „лист“ отдолу магнитчето би се застъпило с дръжката – крие се */
+  dialog > .magnet { display: none; }
   .dialog-body { padding: 1rem var(--gutter-r) calc(1.25rem + var(--safe-bottom)) var(--gutter-l); }
   .dialog-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; gap: 0.5rem; }
-  .dialog-actions .btn { width: 100%; min-height: 50px; font-size: var(--step-0); }
-  /* основното действие отгоре, „Откажи“ отдолу */
+  .dialog-actions .btn { width: 100%; min-height: 50px; font-size: 1rem; }
   .dialog-actions .btn-quiet { order: 2; }
 
   /* таблиците стават списъци: допълнителните колони се крият, а данните им са в реда под името */
@@ -411,14 +463,7 @@ dialog:focus, dialog:focus-visible { outline: none; }
   .ptable th:first-child, .ptable td:first-child { padding-left: 0; }
   .ptable th:last-child, .ptable td:last-child { padding-right: 0; }
   .ptable .col-extra { display: none; }
-  .ptable .row-meta {
-    display: block;
-    margin-top: 0.15rem;
-    color: var(--muted);
-    font-size: 0.8125rem;
-    line-height: 1.4;
-  }
+  .ptable .row-meta { display: block; margin-top: 0.15rem; color: var(--muted); font-size: 0.8125rem; line-height: 1.4; }
   .ptable td.num { white-space: nowrap; }
 }
 @media (min-width: 641px) { .ptable .row-meta { display: none; } }
-

@@ -35,6 +35,7 @@ function finish(result) {
 
 <template>
   <dialog ref="dialog" autofocus @cancel.prevent="finish(false)" @click.self="finish(false)">
+    <span class="magnet m-red" aria-hidden="true"></span>
     <div class="dialog-body">
       <h2>{{ confirmState.title }}</h2>
       <p v-if="confirmState.message">{{ confirmState.message }}</p>
