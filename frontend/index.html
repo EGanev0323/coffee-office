@@ -16,6 +16,13 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Кафе дъската</title>
+    <!-- прилага запазената тема веднага, преди първото рисуване (без „мигане“ на грешната тема) -->
+    <script>
+      try {
+        var t = localStorage.getItem('coffee-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t)
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

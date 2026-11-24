@@ -8,6 +8,7 @@ import { notify } from '../notify'
 import SplitText from '../components/fx/SplitText.vue'
 import BadgeShelf from '../components/BadgeShelf.vue'
 import AppIcon from '../components/AppIcon.vue'
+import { theme, setTheme } from '../theme'
 import { shake } from '../motion'
 import { burst } from '../motion/burst'
 
@@ -65,6 +66,18 @@ async function submit() {
 
     <BadgeShelf />
 
+    <section v-reveal="{ delay: 0.18 }" class="panel theme-panel">
+      <div>
+        <h2>Тема</h2>
+        <p class="hint">По подразбиране следва настройката на телефона ти.</p>
+      </div>
+      <div class="theme-options" role="group" aria-label="Тема">
+        <button type="button" class="btn" :class="{ 'btn-primary': theme === 'system' }" :aria-pressed="theme === 'system'" @click="setTheme('system')">Системна</button>
+        <button type="button" class="btn" :class="{ 'btn-primary': theme === 'light' }" :aria-pressed="theme === 'light'" @click="setTheme('light')">Светла</button>
+        <button type="button" class="btn" :class="{ 'btn-primary': theme === 'dark' }" :aria-pressed="theme === 'dark'" @click="setTheme('dark')">Тъмна</button>
+      </div>
+    </section>
+
     <form ref="formEl" v-spotlight v-reveal="{ delay: 0.2 }" class="panel stack" @submit.prevent="submit">
       <h2>Смяна на парола</h2>
       <p class="hint">Всички други устройства, на които си влязъл, ще бъдат отписани.</p>
@@ -97,4 +110,7 @@ async function submit() {
 <style scoped>
 .account { max-width: 480px; display: grid; gap: 1rem; }
 .logout { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.theme-panel { display: grid; gap: 0.9rem; }
+.theme-options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.theme-options .btn { flex: 1 1 auto; }
 </style>

@@ -117,8 +117,14 @@
   --gutter-r: max(1rem, env(safe-area-inset-right, 0px));
 }
 
+/*
+  Тъмните стойности се прилагат в два случая:
+  1) системна тема е тъмна и потребителят НЕ е избрал изрично светла (data-theme="light");
+  2) потребителят е избрал изрично тъмна (data-theme="dark"), независимо от системата.
+  Превключвателят в „Профил“ слага data-theme на <html> (theme.js). Блокът е еднакъв и за двата селектора.
+*/
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
     --wall: #121619;
     --surface: #1b2126;
@@ -155,6 +161,43 @@
     --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.7);
     --shadow-nav-active: inset 0 0 0 1px #2e373d;
   }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --wall: #121619;
+  --surface: #1b2126;
+  --whiteboard: #20272c;
+  --whiteboard-frame: #39434a;
+  --whiteboard-edge: #4a555d;
+  --ink: #eceff0;
+  --muted: #a2acb2;
+  --rule: #2e373d;
+  --field-border: #6f7a81;
+  --marker-blue: #8eaeff;
+  --marker-blue-hover: #b0c7ff;
+  --marker-red: #ff8f80;
+  --marker-red-hover: #ffb0a5;
+  --marker-green: #6fd39a;
+  --marker-purple: #c7a6ff;
+  --marker-orange: #ffae63;
+  --marker-brown: #dda987;
+  --on-marker: #121619;
+  --red-soft: #3a2422;
+  --ghost: rgba(142, 174, 255, 0.16);
+  --wash: rgba(236, 239, 240, 0.08);
+  --scrim: rgba(0, 0, 0, 0.62);
+  --sticky-yellow: #e6c95c;
+  --sticky-pink: #e6afbe;
+  --sticky-blue: #a6cdea;
+  --sticky-green: #b3da9f;
+  --sticky-ink: #2b240a;
+  --marker-soft: rgba(142, 174, 255, 0.16);
+
+  --shadow-sticky: 0 1px 1px rgba(0, 0, 0, 0.3), 0 10px 16px -8px rgba(0, 0, 0, 0.7);
+  --shadow-magnet: inset -2px -3px 0 rgba(0, 0, 0, 0.25), inset 2px 2px 0 rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.6);
+  --shadow-board: inset 0 0 0 1px #4a555d, 0 0 0 1px #4a555d, 0 12px 24px -16px rgba(0, 0, 0, 0.8);
+  --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.7);
+  --shadow-nav-active: inset 0 0 0 1px #2e373d;
 }
 
 /* ============================ основа ============================ */

@@ -423,6 +423,11 @@ function historyLeave(el, done) {
 
 /* пакетите като залепващи бележки */
 .pack-buy { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap; }
+/* стъперът е „нарисуван“ върху хартията на бележката – тъмно мастило, прозрачен фон (и в двете теми) */
+.pack :deep(.stepper) { background: transparent; border-color: var(--sticky-ink); }
+.pack :deep(.stepper-btn), .pack :deep(.stepper-value) { color: var(--sticky-ink); }
+.pack :deep(.stepper-btn:disabled) { color: var(--sticky-ink); opacity: 0.4; }
+@media (hover: hover) { .pack :deep(.stepper-btn:hover:not(:disabled)) { background: rgba(0, 0, 0, 0.07); } }
 .pack-price { min-width: 4.5rem; font-variant-numeric: tabular-nums; border-color: var(--sticky-ink); color: var(--sticky-ink); background: transparent; }
 @media (hover: hover) { .pack-price:hover:not(:disabled) { background: rgba(0, 0, 0, 0.06); border-color: var(--sticky-ink); } }
 .empty { margin-top: 1rem; }

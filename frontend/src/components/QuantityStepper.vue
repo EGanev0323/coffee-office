@@ -68,6 +68,7 @@ function change(delta) {
   min-width: 2ch;
   text-align: center;
   font-weight: 600;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 </style>
